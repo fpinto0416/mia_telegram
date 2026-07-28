@@ -61,55 +61,49 @@ def _fmt(v, casas=2):
     return str(v)
 
 
+def _fmt_data(v) -> str:
+    ts = pd.to_datetime(v, errors="coerce")
+    return ts.strftime("%d/%m/%Y") if pd.notna(ts) else str(v)
+
+
 def _msg_executor() -> str:
     arq = _arquivo_mais_recente(PASTA / "saidas" / "ordens_dia", "ordem_dia_*_executor_v5_5.xlsx")
     if arq is None:
         return f"MIA — Ordem do dia {HOJE:%d/%m/%Y}\nNenhum ordem_dia_*.xlsx encontrado em saidas/ordens_dia/."
 
-    resumo = pd.read_excel(arq, sheet_name="resumo")
-    r = dict(zip(resumo["metrica"], resumo["valor"]))
     df_ordem = pd.read_excel(arq, sheet_name="ordem")
+    if "veto_gate_historico" in df_ordem.columns:
+        df_ordem = df_ordem[df_ordem["veto_gate_historico"] != 1]
 
-    linhas = [f"MIA — Ordem do dia {HOJE:%d/%m/%Y}", f"Arquivo: {arq.name}", ""]
-    linhas.append(
-        f"Compras: {r.get('compras_opcao_live', '?')} | "
-        f"Alertas: {r.get('alertas_operacionais_live', '?')} | "
-        f"Processados: {r.get('tickers_processados', '?')}"
-    )
-
-    idade_dir = r.get("idade_direction_input_dias")
-    idade_vol = r.get("idade_volatility_input_dias")
-    linhas.append(f"Idade dos modelos (dias) — direction: {idade_dir} | volatility: {idade_vol}")
-    try:
-        if float(idade_dir) > 20 or float(idade_vol) > 20:
-            linhas.append("Aviso: modelos com mais de 20 dias — considere retreinar e subir novos direction_best/volatility_best.")
-    except (TypeError, ValueError):
-        pass
-    linhas.append("")
-
+    linhas = [f"Ordem do dia — {HOJE:%d/%m/%Y}", ""]
     if df_ordem.empty:
-        linhas.append("Nenhum sinal operacional pós-filtro hoje.")
+        linhas.append("Nenhum sinal operacional hoje.")
     else:
         for _, row in df_ordem.head(LIMITE_TICKERS_MSG).iterrows():
             estrategia = row.get("estrategia_preferida", "")
-            esp = _fmt(row.get("esperanca_opcao_dp"), 3)
-            linhas.append(f"- {row['ticker']} — {row['ordem']} — {estrategia} (esp={esp}dp)")
+            linhas.append(f"{row['ticker']} | {row['ordem']} | {estrategia}")
         if len(df_ordem) > LIMITE_TICKERS_MSG:
             linhas.append(f"... +{len(df_ordem) - LIMITE_TICKERS_MSG} no arquivo completo")
 
     try:
         avisos = pd.read_excel(arq, sheet_name="avisos_saida")
         avisos = avisos[avisos["aviso_saida"].notna() & (avisos["aviso_saida"].astype(str).str.strip() != "")]
-        if not avisos.empty:
-            linhas.append("")
-            linhas.append("Avisos de saída:")
+        avisos = avisos[avisos["aviso_saida"].astype(str).str.strip() != "MANTER"]
+        linhas.append("")
+        linhas.append("Avisos de saída")
+        if avisos.empty:
+            linhas.append("Nenhum aviso de saída hoje.")
+        else:
             for _, row in avisos.head(LIMITE_TICKERS_MSG).iterrows():
-                linhas.append(f"- {row['ticker']} — {row['aviso_saida']}")
+                linhas.append(
+                    f"{row['ticker']} | {row['aviso_saida']} | "
+                    f"entrada {_fmt_data(row['data_entrada'])} {row['ordem_entrada']}"
+                )
+            if len(avisos) > LIMITE_TICKERS_MSG:
+                linhas.append(f"... +{len(avisos) - LIMITE_TICKERS_MSG} no arquivo completo")
     except Exception:
         pass
 
-    linhas.append("")
-    linhas.append(f"Arquivo completo commitado em saidas/ordens_dia/{arq.name}")
     return "\n".join(linhas)
 
 
