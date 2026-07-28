@@ -4,7 +4,7 @@ on:
   schedule:
     # Horarios em UTC. Brasilia = UTC-3 (sem horario de verao atualmente).
     - cron: "0 10 * * 1-5"   # 09:00 BRT, seg-sex — antes da abertura da B3
-    - cron: "0 17 * * 1-5"   # 16:00 BRT, seg-sex — previa do fechamento
+    - cron: "0 18 * * 1-5"   # 16:00 BRT, seg-sex — previa do fechamento
     - cron: "30 19 * * 1-5"  # 18:30 BRT, seg-sex — apos o fechamento da B3
   workflow_dispatch: {}
 
