@@ -69,13 +69,13 @@ def _fmt_data(v) -> str:
 def _msg_executor() -> str:
     arq = _arquivo_mais_recente(PASTA / "saidas" / "ordens_dia", "ordem_dia_*_executor_v5_5.xlsx")
     if arq is None:
-        return f"MIA — Ordem do dia {HOJE:%d/%m/%Y}\nNenhum ordem_dia_*.xlsx encontrado em saidas/ordens_dia/."
+        return f"Projeto MIA\nOrdem do dia {HOJE:%d/%m/%Y}\nNenhum ordem_dia_*.xlsx encontrado em saidas/ordens_dia/."
 
     df_ordem = pd.read_excel(arq, sheet_name="ordem")
     if "veto_gate_historico" in df_ordem.columns:
         df_ordem = df_ordem[df_ordem["veto_gate_historico"] != 1]
 
-    linhas = [f"Ordem do dia — {HOJE:%d/%m/%Y}", ""]
+    linhas = ["Projeto MIA", f"Ordem do dia — {HOJE:%d/%m/%Y}", ""]
     if df_ordem.empty:
         linhas.append("Nenhum sinal operacional hoje.")
     else:
@@ -110,10 +110,10 @@ def _msg_executor() -> str:
 def _msg_realizados() -> str:
     arq = _arquivo_mais_recente(PASTA / "saidas" / "realizados", "realizados_*.xlsx")
     if arq is None:
-        return f"MIA — Realizados {HOJE:%d/%m/%Y}\nNenhum realizados_*.xlsx encontrado em saidas/realizados/."
+        return f"Projeto MIA\nRealizados {HOJE:%d/%m/%Y}\nNenhum realizados_*.xlsx encontrado em saidas/realizados/."
 
     agg = pd.read_excel(arq, sheet_name="agregados")
-    linhas = [f"MIA — Realizados {HOJE:%d/%m/%Y}", f"Arquivo: {arq.name}", ""]
+    linhas = ["Projeto MIA", f"Realizados {HOJE:%d/%m/%Y}", f"Arquivo: {arq.name}", ""]
 
     principais = agg[agg["estrutura"] == "naked_30"] if "estrutura" in agg.columns else agg.iloc[0:0]
     for nivel in ["nivel_A", "nivel_B", "nivel_Monitorar", "nivel_vetado"]:
