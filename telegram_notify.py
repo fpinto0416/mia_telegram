@@ -15,6 +15,7 @@ Requer variáveis de ambiente:
 """
 
 import os
+import re
 import sys
 from datetime import date
 from pathlib import Path
@@ -66,6 +67,11 @@ def _fmt_data(v) -> str:
     return ts.strftime("%d/%m/%Y") if pd.notna(ts) else str(v)
 
 
+def _sem_parenteses_finais(texto: str) -> str:
+    """Remove um parenteses no final da string, ex.: 'Call delta~45 naked (quase ATM, ~0.9σ, 20d)' -> 'Call delta~45 naked'."""
+    return re.sub(r"\s*\([^()]*\)\s*$", "", str(texto)).strip()
+
+
 def _msg_executor() -> str:
     arq = _arquivo_mais_recente(PASTA / "saidas" / "ordens_dia", "ordem_dia_*_executor_v5_5.xlsx")
     if arq is None:
@@ -80,7 +86,7 @@ def _msg_executor() -> str:
         linhas.append("Nenhum sinal operacional hoje.")
     else:
         for _, row in df_ordem.head(LIMITE_TICKERS_MSG).iterrows():
-            estrategia = row.get("estrategia_preferida", "")
+            estrategia = _sem_parenteses_finais(row.get("estrategia_preferida", ""))
             linhas.append(f"{row['ticker']} | {row['ordem']} | {estrategia}")
         if len(df_ordem) > LIMITE_TICKERS_MSG:
             linhas.append(f"... +{len(df_ordem) - LIMITE_TICKERS_MSG} no arquivo completo")
