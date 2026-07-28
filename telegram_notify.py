@@ -110,6 +110,16 @@ def _msg_executor() -> str:
     except Exception:
         pass
 
+    try:
+        resumo = pd.read_excel(arq, sheet_name="resumo")
+        r = dict(zip(resumo["metrica"], resumo["valor"]))
+        idade_dir = r.get("idade_direction_input_dias")
+        idade_vol = r.get("idade_volatility_input_dias")
+        linhas.append("")
+        linhas.append(f"Direction sem rodar há {_fmt(idade_dir, 0)} dias | Volatility sem rodar há {_fmt(idade_vol, 0)} dias")
+    except Exception:
+        pass
+
     return "\n".join(linhas)
 
 
