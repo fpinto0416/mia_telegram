@@ -1,10 +1,10 @@
 VERSAO EXECUTOR: v5.5_executor_diario
 Arquivo em execução: /home/runner/work/mia_telegram/mia_telegram/executor.py
-Data de referência: 2026-07-28
+Data de referência: 2026-07-29
 ✓ Artefato direction selecionado: direction_best_2026_07_25.xlsx
-  Data do artefato direction: 2026-07-25 | idade: 3 dias
+  Data do artefato direction: 2026-07-25 | idade: 4 dias
 ✓ Artefato volatility selecionado: volatility_best_2026_07_25_v6_2_operational.xlsx
-  Data do artefato volatility: 2026-07-25 | idade: 3 dias
+  Data do artefato volatility: 2026-07-25 | idade: 4 dias
 ✓ Direction Executor_Input: /home/runner/work/mia_telegram/mia_telegram/saidas/direction/direction_best_2026_07_25.xlsx
 ✓ Volatility Executor_Input: /home/runner/work/mia_telegram/mia_telegram/saidas/volatility/volatility_best_2026_07_25_v6_2_operational.xlsx
 Colunas direction encontradas: ['data', 'ticker', 'mae_val', 'razao_mae', 'gap_teste_val', 'rmse_mae_val', 'accuracy_direcional', 'precision_macro', 'precision_up', 'precision_down', 'recall_macro', 'recall_up', 'recall_down', 'modelo_escolhido', 'n_features', 'n_features_efetivas', 'n_aprovados', 'estabilidade_ok', 'edge_up_ok', 'edge_down_ok', 'edge_up_persistente', 'edge_down_persistente', 'direction_model_ok_exec_up', 'direction_model_ok_exec_down', 'direction_model_ok_exec_side', 'classe_executor_direction', 'direction_quality_score_adj', 'direction_up_score', 'direction_down_score', 'features_efetivas', 'sinal_confiavel']
@@ -56,9 +56,9 @@ Número de operações históricas: 56
 Taxa de acertos: 23.2%
 GMDP: -0.13
 Esperança ganho DP: -0.09
-Direção live: 0.045996
+Direção live: 0.046003
 Razão sinal live: 0.98
-Vol previsão ratio live: 0.936 (-6.4%)
+Vol previsão ratio live: 0.938 (-6.2%)
 Vol thresholds mod/forte/comp: 1.118 / 1.118 / 0.970
 rv_rank_252/ivrank proxy: 0.43
 Target: 0.00
@@ -74,9 +74,9 @@ Número de operações históricas: 43
 Taxa de acertos: 69.8%
 GMDP: 0.63
 Esperança ganho DP: 0.32
-Direção live: 0.108583
+Direção live: 0.108787
 Razão sinal live: 1.87
-Vol previsão ratio live: 1.218 (+21.8%)
+Vol previsão ratio live: 1.220 (+22.0%)
 Vol thresholds mod/forte/comp: 1.030 / 1.098 / 0.970
 rv_rank_252/ivrank proxy: 0.09
 Target: 0.00
@@ -95,7 +95,7 @@ GMDP: 0.04
 Esperança ganho DP: 0.17
 Direção live: 0.009955
 Razão sinal live: 0.28
-Vol previsão ratio live: 1.035 (+3.5%)
+Vol previsão ratio live: 1.034 (+3.4%)
 Vol thresholds mod/forte/comp: 1.140 / 1.140 / 0.917
 rv_rank_252/ivrank proxy: 0.36
 Target: 0.00
@@ -112,9 +112,9 @@ Número de operações históricas: 165
 Taxa de acertos: 70.9%
 GMDP: 0.78
 Esperança ganho DP: 0.64
-Direção live: 0.021369
+Direção live: 0.021370
 Razão sinal live: 0.47
-Vol previsão ratio live: 0.934 (-6.6%)
+Vol previsão ratio live: 0.937 (-6.3%)
 Vol thresholds mod/forte/comp: 1.030 / 1.080 / 0.970
 rv_rank_252/ivrank proxy: 0.54
 Target: 0.00
@@ -132,7 +132,7 @@ GMDP: 0.16
 Esperança ganho DP: 0.24
 Direção live: 0.054728
 Razão sinal live: 1.44
-Vol previsão ratio live: 1.105 (+10.5%)
+Vol previsão ratio live: 1.107 (+10.7%)
 Vol thresholds mod/forte/comp: 1.056 / 1.160 / 0.633
 rv_rank_252/ivrank proxy: 0.31
 Target: 19.36
@@ -150,7 +150,7 @@ GMDP: -0.00
 Esperança ganho DP: 0.01
 Direção live: 0.046078
 Razão sinal live: 0.77
-Vol previsão ratio live: 0.996 (-0.4%)
+Vol previsão ratio live: 0.999 (-0.1%)
 Vol thresholds mod/forte/comp: 1.099 / 1.099 / 0.906
 rv_rank_252/ivrank proxy: 0.37
 Target: 0.00
@@ -167,9 +167,9 @@ Número de operações históricas: 145
 Taxa de acertos: 44.8%
 GMDP: 0.29
 Esperança ganho DP: 0.15
-Direção live: 0.000629
+Direção live: 0.000533
 Razão sinal live: 0.01
-Vol previsão ratio live: 1.119 (+11.9%)
+Vol previsão ratio live: 1.120 (+12.0%)
 Vol thresholds mod/forte/comp: 1.030 / 1.102 / 0.970
 rv_rank_252/ivrank proxy: 0.28
 Target: 0.00
@@ -187,7 +187,7 @@ GMDP: 0.34
 Esperança ganho DP: 0.17
 Direção live: 0.051975
 Razão sinal live: 0.95
-Vol previsão ratio live: 0.951 (-4.9%)
+Vol previsão ratio live: 0.954 (-4.6%)
 Vol thresholds mod/forte/comp: 1.041 / 1.132 / 0.843
 rv_rank_252/ivrank proxy: 0.48
 Target: 0.00
@@ -224,7 +224,7 @@ GMDP: 0.45
 Esperança ganho DP: 0.24
 Direção live: 0.160750
 Razão sinal live: 3.50
-Vol previsão ratio live: 0.859 (-14.1%)
+Vol previsão ratio live: 0.863 (-13.7%)
 Vol thresholds mod/forte/comp: 1.049 / 1.105 / 0.959
 rv_rank_252/ivrank proxy: 0.39
 Target: 0.00
@@ -242,7 +242,7 @@ GMDP: -0.18
 Esperança ganho DP: -0.06
 Direção live: 0.068790
 Razão sinal live: 1.06
-Vol previsão ratio live: 1.142 (+14.2%)
+Vol previsão ratio live: 1.144 (+14.4%)
 Vol thresholds mod/forte/comp: 1.140 / 1.140 / 0.845
 rv_rank_252/ivrank proxy: 0.23
 Target: 9.16
@@ -295,7 +295,7 @@ Número de operações históricas: 121
 Taxa de acertos: 76.9%
 GMDP: 1.18
 Esperança ganho DP: 1.44
-Direção live: -0.069695
+Direção live: -0.069524
 Razão sinal live: 0.65
 Vol previsão ratio live: 1.015 (+1.5%)
 Vol thresholds mod/forte/comp: 1.096 / 1.149 / 0.970
@@ -334,7 +334,7 @@ GMDP: 0.21
 Esperança ganho DP: 0.10
 Direção live: 0.023942
 Razão sinal live: 0.65
-Vol previsão ratio live: 1.225 (+22.5%)
+Vol previsão ratio live: 1.227 (+22.7%)
 Vol thresholds mod/forte/comp: 1.044 / 1.158 / 0.967
 rv_rank_252/ivrank proxy: 0.09
 Target: 0.00
@@ -369,7 +369,7 @@ Número de operações históricas: 64
 Taxa de acertos: 85.9%
 GMDP: 0.18
 Esperança ganho DP: 1.00
-Direção live: -0.011194
+Direção live: -0.011146
 Razão sinal live: 0.31
 Vol previsão ratio live: 0.928 (-7.2%)
 Vol thresholds mod/forte/comp: 1.104 / 1.220 / 0.970
@@ -387,7 +387,7 @@ Número de operações históricas: 69
 Taxa de acertos: 66.7%
 GMDP: 0.08
 Esperança ganho DP: 0.14
-Direção live: -0.041938
+Direção live: -0.041948
 Razão sinal live: 0.66
 Vol previsão ratio live: 0.981 (-1.9%)
 Vol thresholds mod/forte/comp: 1.030 / 1.080 / 0.970
@@ -426,7 +426,7 @@ GMDP: 0.66
 Esperança ganho DP: 0.33
 Direção live: 0.020977
 Razão sinal live: 0.35
-Vol previsão ratio live: 1.105 (+10.5%)
+Vol previsão ratio live: 1.109 (+10.9%)
 Vol thresholds mod/forte/comp: 1.118 / 1.156 / 0.970
 rv_rank_252/ivrank proxy: 0.27
 Target: 0.00
@@ -463,7 +463,7 @@ GMDP: 0.32
 Esperança ganho DP: 0.19
 Direção live: 0.131477
 Razão sinal live: 3.00
-Vol previsão ratio live: 1.096 (+9.6%)
+Vol previsão ratio live: 1.099 (+9.9%)
 Vol thresholds mod/forte/comp: 1.120 / 1.191 / 0.874
 rv_rank_252/ivrank proxy: 0.33
 Target: 0.00
@@ -482,7 +482,7 @@ GMDP: 0.17
 Esperança ganho DP: 0.05
 Direção live: -0.022007
 Razão sinal live: 0.40
-Vol previsão ratio live: 0.936 (-6.4%)
+Vol previsão ratio live: 0.937 (-6.3%)
 Vol thresholds mod/forte/comp: 1.104 / 1.113 / 0.914
 rv_rank_252/ivrank proxy: 0.67
 Target: 0.00
@@ -500,7 +500,7 @@ GMDP: 0.36
 Esperança ganho DP: 0.51
 Direção live: 0.019371
 Razão sinal live: 0.41
-Vol previsão ratio live: 0.910 (-9.0%)
+Vol previsão ratio live: 0.912 (-8.8%)
 Vol thresholds mod/forte/comp: 1.030 / 1.137 / 0.967
 rv_rank_252/ivrank proxy: 0.56
 Target: 0.00
@@ -516,9 +516,9 @@ Número de operações históricas: 25
 Taxa de acertos: 8.0%
 GMDP: 0.01
 Esperança ganho DP: -0.16
-Direção live: -0.056493
+Direção live: -0.056514
 Razão sinal live: 0.52
-Vol previsão ratio live: 1.010 (+1.0%)
+Vol previsão ratio live: 1.009 (+0.9%)
 Vol thresholds mod/forte/comp: 1.060 / 1.215 / 0.816
 rv_rank_252/ivrank proxy: 0.24
 Target: 0.00
@@ -555,7 +555,7 @@ GMDP: -0.18
 Esperança ganho DP: -0.16
 Direção live: -0.038750
 Razão sinal live: 0.67
-Vol previsão ratio live: 1.109 (+10.9%)
+Vol previsão ratio live: 1.110 (+11.0%)
 Vol thresholds mod/forte/comp: 1.170 / 1.170 / 0.855
 rv_rank_252/ivrank proxy: 0.22
 Target: 0.00
@@ -629,7 +629,7 @@ Número de operações históricas: 10
 Taxa de acertos: 40.0%
 GMDP: 0.53
 Esperança ganho DP: 0.48
-Direção live: -0.015398
+Direção live: -0.015470
 Razão sinal live: 0.34
 Vol previsão ratio live: 0.921 (-7.9%)
 Vol thresholds mod/forte/comp: 1.112 / 1.112 / 0.801
@@ -667,7 +667,7 @@ GMDP: -0.10
 Esperança ganho DP: -0.10
 Direção live: 0.013666
 Razão sinal live: 0.22
-Vol previsão ratio live: 0.929 (-7.1%)
+Vol previsão ratio live: 0.927 (-7.3%)
 Vol thresholds mod/forte/comp: 1.034 / 1.082 / 0.962
 rv_rank_252/ivrank proxy: 0.41
 Target: 0.00
@@ -683,7 +683,7 @@ Número de operações históricas: 46
 Taxa de acertos: 43.5%
 GMDP: 0.32
 Esperança ganho DP: 0.12
-Direção live: -0.003110
+Direção live: -0.003356
 Razão sinal live: 0.07
 Vol previsão ratio live: 0.907 (-9.3%)
 Vol thresholds mod/forte/comp: 1.030 / 1.121 / 0.970
@@ -832,7 +832,7 @@ GMDP: 0.44
 Esperança ganho DP: 0.18
 Direção live: 0.047552
 Razão sinal live: 1.05
-Vol previsão ratio live: 1.090 (+9.0%)
+Vol previsão ratio live: 1.091 (+9.1%)
 Vol thresholds mod/forte/comp: 1.243 / 1.243 / 0.883
 rv_rank_252/ivrank proxy: 0.24
 Target: 0.00
@@ -868,7 +868,7 @@ GMDP: -0.10
 Esperança ganho DP: -0.13
 Direção live: -0.085623
 Razão sinal live: 1.58
-Vol previsão ratio live: 1.136 (+13.6%)
+Vol previsão ratio live: 1.138 (+13.8%)
 Vol thresholds mod/forte/comp: 1.232 / 1.232 / 0.912
 rv_rank_252/ivrank proxy: 0.31
 Target: 0.00
@@ -886,7 +886,7 @@ GMDP: 1.62
 Esperança ganho DP: 1.28
 Direção live: -0.011832
 Razão sinal live: 0.17
-Vol previsão ratio live: 0.967 (-3.3%)
+Vol previsão ratio live: 0.969 (-3.1%)
 Vol thresholds mod/forte/comp: 1.067 / 1.127 / 0.915
 rv_rank_252/ivrank proxy: 0.44
 Target: 0.00
@@ -946,10 +946,10 @@ rv_rank_252/ivrank proxy: 0.15
 Target: 0.00
 
 ==========================================================================================
-Excel salvo: /home/runner/work/mia_telegram/mia_telegram/saidas/ordens_dia/ordem_dia_2026_07_28_executor_v5_5.xlsx
+Excel salvo: /home/runner/work/mia_telegram/mia_telegram/saidas/ordens_dia/ordem_dia_2026_07_29_executor_v5_5.xlsx
 Linhas na aba ordem pós-filtro: 4
 Compras de opção live: 1
 Alertas operacionais live: 3
 Tickers processados: 49
 Abas: ordem, todos, gates_direction_vol, diagnostico, funil_diagnostico, resumo, estrategias_opcoes, avisos_saida
-Avisos saída: REALIZAR=0 | ENCERRAR=0 | NO LUCRO=0 | INVERTIDO=0 | FRACO_REV=5 | FRACO_SEG=1 | MANTER=6 | AGUARDAR=0
+Avisos saída: REALIZAR=0 | ENCERRAR=0 | NO LUCRO=0 | INVERTIDO=0 | FRACO_REV=4 | FRACO_SEG=1 | MANTER=6 | AGUARDAR=0
