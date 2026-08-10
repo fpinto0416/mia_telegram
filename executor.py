@@ -83,6 +83,7 @@ import time
 import glob
 import re
 from pathlib import Path
+from datetime import date
 from typing import Dict, List, Optional, Tuple, Any
 
 import numpy as np
@@ -1906,7 +1907,6 @@ if __name__ == "__main__":
         import re
         m = re.search(r"(\d{4})_(\d{2})_(\d{2})", path.stem)
         if m:
-            from datetime import date
             return date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
         return None
 
