@@ -8,7 +8,7 @@ Uso:
     python realizados.py
 
 Output:
-    realizados_YYYY_MM_DD.xlsx  (abas: realizados, agregados)
+    realizados_YYYY_MM_DD.xlsx  (abas: realizados, agregados, agregados_magnitude)
 """
 
 import re
@@ -189,6 +189,78 @@ def _processar_sinal(row: pd.Series, data_sinal: date) -> dict | None:
     }
 
 
+# ── Agregado por magnitude do movimento + estrutura de fato recomendada ──────
+# (só roda sobre df_fech_limpo — mesma base que os demais agregados)
+
+N_MIN_MAGNITUDE = 15  # amostra mínima por terço pra não reportar ruído como sinal
+
+
+def _agregar_magnitude_e_estrutura(df_fech_limpo: pd.DataFrame) -> pd.DataFrame:
+    linhas = []
+    if df_fech_limpo.empty:
+        return pd.DataFrame(linhas)
+
+    # ── corte 1: terços por |M_real| — acerto/payoff é melhor nos movimentos
+    # grandes (objetivo do projeto) ou pior? ──────────────────────────────────
+    sub = df_fech_limpo.dropna(subset=["M_real"]).copy()
+    if len(sub) >= 3 * N_MIN_MAGNITUDE:
+        sub["abs_M"] = sub["M_real"].abs()
+        sub["terco_magnitude"] = pd.qcut(sub["abs_M"], 3, labels=["pequeno", "medio", "grande"])
+        for terco, grp in sub.groupby("terco_magnitude", observed=True):
+            for nome in ESTRUTURAS_OPC:
+                linhas.append({
+                    "grupo":           f"magnitude_{terco}",
+                    "estrutura":       nome,
+                    "n":               len(grp),
+                    "acerto_direcao":  round(float(grp["acerto_direcao"].mean()), 3),
+                    "lucro_estrutura": round(float(grp[f"lucro_{nome}"].mean()), 3),
+                    "payoff_medio":    round(float(grp[f"payoff_{nome}"].mean()), 4),
+                    "med_abs_M":       round(float(grp["abs_M"].median()), 4),
+                })
+    else:
+        linhas.append({
+            "grupo": "magnitude_amostra_insuficiente", "estrutura": "-",
+            "n": len(sub), "acerto_direcao": np.nan, "lucro_estrutura": np.nan,
+            "payoff_medio": np.nan, "med_abs_M": np.nan,
+        })
+
+    # ── corte 2: estrutura de fato recomendada pelo executor (estrutura_otima),
+    # não uma fixa arbitrária — exclui sinais "nenhuma"/NaN (executor disse não
+    # operar) ─────────────────────────────────────────────────────────────────
+    valida = df_fech_limpo["estrutura_otima"].isin(ESTRUTURAS_OPC.keys())
+    df_rec = df_fech_limpo[valida].copy()
+    if not df_rec.empty:
+        df_rec["payoff_escolhida"] = df_rec.apply(lambda r: r[f"payoff_{r['estrutura_otima']}"], axis=1)
+        df_rec["lucro_escolhida"]  = df_rec.apply(lambda r: r[f"lucro_{r['estrutura_otima']}"], axis=1)
+
+        linhas.append({
+            "grupo": "estrutura_recomendada_geral", "estrutura": "(por sinal)",
+            "n":               len(df_rec),
+            "acerto_direcao":  round(float(df_rec["acerto_direcao"].mean()), 3),
+            "lucro_estrutura": round(float(df_rec["lucro_escolhida"].mean()), 3),
+            "payoff_medio":    round(float(df_rec["payoff_escolhida"].mean()), 4),
+            "med_abs_M":       np.nan,
+        })
+        for estrutura, grp in df_rec.groupby("estrutura_otima"):
+            linhas.append({
+                "grupo": "estrutura_recomendada_por_tipo", "estrutura": estrutura,
+                "n":               len(grp),
+                "acerto_direcao":  round(float(grp["acerto_direcao"].mean()), 3),
+                "lucro_estrutura": round(float(grp["lucro_escolhida"].mean()), 3),
+                "payoff_medio":    round(float(grp["payoff_escolhida"].mean()), 4),
+                "med_abs_M":       np.nan,
+            })
+
+    n_sem_estrutura = int((~valida).sum())
+    linhas.append({
+        "grupo": "sem_estrutura_recomendada_nenhuma_ou_na", "estrutura": "-",
+        "n": n_sem_estrutura, "acerto_direcao": np.nan,
+        "lucro_estrutura": np.nan, "payoff_medio": np.nan, "med_abs_M": np.nan,
+    })
+
+    return pd.DataFrame(linhas)
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
@@ -295,6 +367,29 @@ def main():
 
     df_agg = pd.DataFrame(agg_rows)
 
+    # ── Aba agregados_magnitude: acerto/payoff condicionado à magnitude do
+    # movimento e à estrutura de fato recomendada pelo executor ──────────────
+    # Motivação (11/08): acerto_direcao trata um movimento de 0,02dp igual a um
+    # de 2,0dp — mas o edge do MIA só existe se o movimento for grande o
+    # suficiente pra vencer o custo da opção. Terços por |M_real| mostram se o
+    # modelo acerta MAIS nos movimentos grandes (objetivo do projeto) ou menos.
+    # Achado inicial (196 sinais, run 11/08): acerto cai de ~48% (terço pequeno)
+    # pra 23% (terço grande) — pior que o acaso justo onde deveria ser melhor.
+    df_agg_mag = _agregar_magnitude_e_estrutura(df_fech_limpo)
+    if not df_agg_mag.empty:
+        terco_grande = df_agg_mag[(df_agg_mag["grupo"] == "magnitude_grande")
+                                   & (df_agg_mag["estrutura"] == "naked_30")]
+        if not terco_grande.empty:
+            print(f"\nAcerto no terço de movimentos GRANDES (naked_30): "
+                  f"{terco_grande['acerto_direcao'].iloc[0]:.1%} "
+                  f"(N={int(terco_grande['n'].iloc[0])}) — comparar com ~50% de acaso.")
+        geral_rec = df_agg_mag[df_agg_mag["grupo"] == "estrutura_recomendada_geral"]
+        if not geral_rec.empty:
+            print(f"Payoff usando a estrutura de fato recomendada por sinal (estrutura_otima): "
+                  f"{geral_rec['payoff_medio'].iloc[0]:.4f}  |  "
+                  f"acerto: {geral_rec['acerto_direcao'].iloc[0]:.1%}  "
+                  f"(N={int(geral_rec['n'].iloc[0])})")
+
     # Parte D: resumo de versões e linhas inferidas
     if "versao_inferida" in df_fech.columns:
         n_inf = int(df_fech["versao_inferida"].sum())
@@ -321,6 +416,7 @@ def main():
     with pd.ExcelWriter(SAIDA, engine="openpyxl") as writer:
         df_real.to_excel(writer, sheet_name="realizados", index=False)
         df_agg.to_excel(writer, sheet_name="agregados", index=False)
+        df_agg_mag.to_excel(writer, sheet_name="agregados_magnitude", index=False)
 
     print(f"\nSalvo em: {SAIDA}")
 
