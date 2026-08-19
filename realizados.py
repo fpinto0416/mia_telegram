@@ -92,6 +92,17 @@ def _payoff_estrutura(M: float, nome: str) -> float:
     return round(pay - custo_ef, 4)
 
 
+def _profit_factor(retornos: pd.Series) -> float:
+    """soma dos ganhos / |soma das perdas| -- mesma convenção usada em
+    api_OMQS/hilo (>1 = ganhos pesam mais que perdas). NaN é ignorado
+    (dropna) em vez de contar como perda -- sinais abertos/sem estrutura
+    não devem puxar o denominador pra baixo."""
+    r = pd.Series(retornos).dropna()
+    ganhos = r[r > 0].sum()
+    perdas = r[r <= 0].sum()
+    return round(float(ganhos / abs(perdas)), 3) if perdas != 0 else float("nan")
+
+
 # ── Processa um sinal ─────────────────────────────────────────────────────────
 
 def _processar_sinal(row: pd.Series, data_sinal: date) -> dict | None:
@@ -139,6 +150,11 @@ def _processar_sinal(row: pd.Series, data_sinal: date) -> dict | None:
         # C3: lucro por estrutura derivado do próprio payoff (break-even correto por estrutura)
         lucros    = {f"lucro_{n}": int(payoffs[f"payoff_{n}"] > 0) for n in ESTRUTURAS_OPC}
         acerto_direcao = int(M_real > 0)
+        # retorno da AÇÃO pura na direção do sinal (sem estrutura de opção
+        # nenhuma por cima) -- só o carry/convexity do M_real são específicos
+        # de opção; retorno_acao é literalmente lado * variação de preço.
+        retorno_acao   = round(lado * ret_real, 4)
+        acerto_acao    = int(retorno_acao > 0)
         close_t20_out  = round(close_t20, 2)
         M_parcial      = np.nan
     else:
@@ -147,6 +163,8 @@ def _processar_sinal(row: pd.Series, data_sinal: date) -> dict | None:
         payoffs        = {f"payoff_{n}": np.nan for n in ESTRUTURAS_OPC}
         lucros         = {f"lucro_{n}": np.nan for n in ESTRUTURAS_OPC}
         acerto_direcao = np.nan
+        retorno_acao   = np.nan
+        acerto_acao    = np.nan
         close_t20_out  = np.nan
         close_parcial  = float(df_p["Close"].iloc[-1])
         M_parcial      = round(lado * (close_parcial / close_t - 1) / (vol_t * SQRT_H), 4)
@@ -184,6 +202,8 @@ def _processar_sinal(row: pd.Series, data_sinal: date) -> dict | None:
         "M_real":                M_real,
         "M_parcial":             M_parcial,
         "acerto_direcao":        acerto_direcao,
+        "retorno_acao":          retorno_acao,
+        "acerto_acao":           acerto_acao,
         **payoffs,
         **lucros,
     }
@@ -207,15 +227,20 @@ def _agregar_magnitude_e_estrutura(df_fech_limpo: pd.DataFrame) -> pd.DataFrame:
         sub["abs_M"] = sub["M_real"].abs()
         sub["terco_magnitude"] = pd.qcut(sub["abs_M"], 3, labels=["pequeno", "medio", "grande"])
         for terco, grp in sub.groupby("terco_magnitude", observed=True):
+            ret_acao_medio = round(float(grp["retorno_acao"].mean()), 4)
+            pf_acao        = _profit_factor(grp["retorno_acao"])
             for nome in ESTRUTURAS_OPC:
                 linhas.append({
-                    "grupo":           f"magnitude_{terco}",
-                    "estrutura":       nome,
-                    "n":               len(grp),
-                    "acerto_direcao":  round(float(grp["acerto_direcao"].mean()), 3),
-                    "lucro_estrutura": round(float(grp[f"lucro_{nome}"].mean()), 3),
-                    "payoff_medio":    round(float(grp[f"payoff_{nome}"].mean()), 4),
-                    "med_abs_M":       round(float(grp["abs_M"].median()), 4),
+                    "grupo":              f"magnitude_{terco}",
+                    "estrutura":          nome,
+                    "n":                  len(grp),
+                    "acerto_direcao":     round(float(grp["acerto_direcao"].mean()), 3),
+                    "lucro_estrutura":    round(float(grp[f"lucro_{nome}"].mean()), 3),
+                    "payoff_medio":       round(float(grp[f"payoff_{nome}"].mean()), 4),
+                    "med_abs_M":          round(float(grp["abs_M"].median()), 4),
+                    "pf_estrutura":       _profit_factor(grp[f"payoff_{nome}"]),
+                    "retorno_acao_medio": ret_acao_medio,
+                    "pf_acao":            pf_acao,
                 })
     else:
         linhas.append({
@@ -235,20 +260,26 @@ def _agregar_magnitude_e_estrutura(df_fech_limpo: pd.DataFrame) -> pd.DataFrame:
 
         linhas.append({
             "grupo": "estrutura_recomendada_geral", "estrutura": "(por sinal)",
-            "n":               len(df_rec),
-            "acerto_direcao":  round(float(df_rec["acerto_direcao"].mean()), 3),
-            "lucro_estrutura": round(float(df_rec["lucro_escolhida"].mean()), 3),
-            "payoff_medio":    round(float(df_rec["payoff_escolhida"].mean()), 4),
-            "med_abs_M":       np.nan,
+            "n":                  len(df_rec),
+            "acerto_direcao":     round(float(df_rec["acerto_direcao"].mean()), 3),
+            "lucro_estrutura":    round(float(df_rec["lucro_escolhida"].mean()), 3),
+            "payoff_medio":       round(float(df_rec["payoff_escolhida"].mean()), 4),
+            "med_abs_M":          np.nan,
+            "pf_estrutura":       _profit_factor(df_rec["payoff_escolhida"]),
+            "retorno_acao_medio": round(float(df_rec["retorno_acao"].mean()), 4),
+            "pf_acao":            _profit_factor(df_rec["retorno_acao"]),
         })
         for estrutura, grp in df_rec.groupby("estrutura_otima"):
             linhas.append({
                 "grupo": "estrutura_recomendada_por_tipo", "estrutura": estrutura,
-                "n":               len(grp),
-                "acerto_direcao":  round(float(grp["acerto_direcao"].mean()), 3),
-                "lucro_estrutura": round(float(grp["lucro_escolhida"].mean()), 3),
-                "payoff_medio":    round(float(grp["payoff_escolhida"].mean()), 4),
-                "med_abs_M":       np.nan,
+                "n":                  len(grp),
+                "acerto_direcao":     round(float(grp["acerto_direcao"].mean()), 3),
+                "lucro_estrutura":    round(float(grp["lucro_escolhida"].mean()), 3),
+                "payoff_medio":       round(float(grp["payoff_escolhida"].mean()), 4),
+                "med_abs_M":          np.nan,
+                "pf_estrutura":       _profit_factor(grp["payoff_escolhida"]),
+                "retorno_acao_medio": round(float(grp["retorno_acao"].mean()), 4),
+                "pf_acao":            _profit_factor(grp["retorno_acao"]),
             })
 
     n_sem_estrutura = int((~valida).sum())
@@ -310,6 +341,9 @@ def main():
         print(f"Acerto direção (limpos): {df_fech_limpo['acerto_direcao'].mean():.1%}")
         print(f"Payoff naked_30 médio (limpos): {df_fech_limpo['payoff_naked_30'].mean():.4f}")
         print(f"Lucro naked_30 (payoff>0, limpos): {df_fech_limpo['lucro_naked_30'].mean():.1%}")
+        print(f"Retorno médio da AÇÃO na direção do sinal (limpos): {df_fech_limpo['retorno_acao'].mean():.2%}")
+        print(f"PF ação (limpos): {_profit_factor(df_fech_limpo['retorno_acao']):.2f}  |  "
+              f"PF opção naked_30 (limpos): {_profit_factor(df_fech_limpo['payoff_naked_30']):.2f}")
 
     # ── Aba agregados (todos os _agg rodam sobre df_fech_limpo) ──────────────
     agg_rows = []
@@ -318,15 +352,20 @@ def main():
         sub = df_fech_limpo[mask]
         if sub.empty:
             return
+        ret_acao_medio = round(float(sub["retorno_acao"].mean()), 4)
+        pf_acao        = _profit_factor(sub["retorno_acao"])
         for nome in ESTRUTURAS_OPC:
             agg_rows.append({
-                "grupo":           label,
-                "estrutura":       nome,
-                "n":               len(sub),
-                "acerto_direcao":  round(float(sub["acerto_direcao"].mean()), 3),
-                "lucro_estrutura": round(float(sub[f"lucro_{nome}"].mean()), 3),
-                "payoff_medio":    round(float(sub[f"payoff_{nome}"].mean()), 4),
-                "payoff_mediano":  round(float(sub[f"payoff_{nome}"].median()), 4),
+                "grupo":              label,
+                "estrutura":          nome,
+                "n":                  len(sub),
+                "acerto_direcao":     round(float(sub["acerto_direcao"].mean()), 3),
+                "lucro_estrutura":    round(float(sub[f"lucro_{nome}"].mean()), 3),
+                "payoff_medio":       round(float(sub[f"payoff_{nome}"].mean()), 4),
+                "payoff_mediano":     round(float(sub[f"payoff_{nome}"].median()), 4),
+                "pf_estrutura":       _profit_factor(sub[f"payoff_{nome}"]),
+                "retorno_acao_medio": ret_acao_medio,
+                "pf_acao":            pf_acao,
             })
 
     # por nível (sobre df_fech_limpo)
@@ -356,13 +395,16 @@ def main():
     for nome in ESTRUTURAS_OPC:
         if not df_fech_cont.empty:
             agg_rows.append({
-                "grupo":           "CONTAMINADO_rel_rsl20_NAO_USAR_P_CONCLUSAO",
-                "estrutura":       nome,
-                "n":               len(df_fech_cont),
-                "acerto_direcao":  round(float(df_fech_cont["acerto_direcao"].mean()), 3),
-                "lucro_estrutura": round(float(df_fech_cont[f"lucro_{nome}"].mean()), 3),
-                "payoff_medio":    round(float(df_fech_cont[f"payoff_{nome}"].mean()), 4),
-                "payoff_mediano":  round(float(df_fech_cont[f"payoff_{nome}"].median()), 4),
+                "grupo":              "CONTAMINADO_rel_rsl20_NAO_USAR_P_CONCLUSAO",
+                "estrutura":          nome,
+                "n":                  len(df_fech_cont),
+                "acerto_direcao":     round(float(df_fech_cont["acerto_direcao"].mean()), 3),
+                "lucro_estrutura":    round(float(df_fech_cont[f"lucro_{nome}"].mean()), 3),
+                "payoff_medio":       round(float(df_fech_cont[f"payoff_{nome}"].mean()), 4),
+                "payoff_mediano":     round(float(df_fech_cont[f"payoff_{nome}"].median()), 4),
+                "pf_estrutura":       _profit_factor(df_fech_cont[f"payoff_{nome}"]),
+                "retorno_acao_medio": round(float(df_fech_cont["retorno_acao"].mean()), 4),
+                "pf_acao":            _profit_factor(df_fech_cont["retorno_acao"]),
             })
 
     df_agg = pd.DataFrame(agg_rows)
@@ -387,7 +429,9 @@ def main():
         if not geral_rec.empty:
             print(f"Payoff usando a estrutura de fato recomendada por sinal (estrutura_otima): "
                   f"{geral_rec['payoff_medio'].iloc[0]:.4f}  |  "
-                  f"acerto: {geral_rec['acerto_direcao'].iloc[0]:.1%}  "
+                  f"acerto: {geral_rec['acerto_direcao'].iloc[0]:.1%}  |  "
+                  f"PF opção: {geral_rec['pf_estrutura'].iloc[0]:.2f}  |  "
+                  f"PF ação: {geral_rec['pf_acao'].iloc[0]:.2f}  "
                   f"(N={int(geral_rec['n'].iloc[0])})")
 
     # Parte D: resumo de versões e linhas inferidas
