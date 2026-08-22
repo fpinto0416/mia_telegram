@@ -138,6 +138,28 @@ def _processar_sinal(row: pd.Series, data_sinal: date) -> dict | None:
     status            = "fechado" if pos_t20 < len(idx_pregoes) else "aberto"
     pregoes_decorridos = 20 if status == "fechado" else (len(idx_pregoes) - 1 - pos_sinal)
 
+    # ── Componente VOLATILIDADE: vol_prediction_ratio (previsto no dia do sinal)
+    # é uma previsão de EXPANSÃO/CONTRAÇÃO da vol nos próximos 20 pregões
+    # (>1 = expansão prevista, <1 = contração). O contraponto realizado é a
+    # mesma métrica EWMA(22), só que medida 20 pregões à frente -- mesma régua
+    # usada para vol_t, então a razão é comparável ponto a ponto.
+    vol_prediction_ratio = row.get("vol_prediction_ratio", np.nan)
+    if status == "fechado":
+        vol_t20 = float(ret_d.ewm(span=22, adjust=False).std().iloc[pos_t20])
+    else:
+        vol_t20 = np.nan
+
+    vol_realizado_ratio = np.nan
+    acerto_vol_direcao  = np.nan
+    erro_vol_ratio       = np.nan
+    if status == "fechado" and not np.isnan(vol_t20) and vol_t20 != 0:
+        vol_realizado_ratio = round(vol_t20 / vol_t, 4)
+        if pd.notna(vol_prediction_ratio):
+            pred_expansao = float(vol_prediction_ratio) >= 1.0
+            real_expansao = vol_realizado_ratio >= 1.0
+            acerto_vol_direcao = int(pred_expansao == real_expansao)
+            erro_vol_ratio = round(float(vol_prediction_ratio) - vol_realizado_ratio, 4)
+
     # C2: payoffs só para sinais fechados; abertos recebem NaN
     if status == "fechado":
         close_t20 = float(df_p["Close"].iloc[pos_t20])
@@ -179,6 +201,17 @@ def _processar_sinal(row: pd.Series, data_sinal: date) -> dict | None:
         versao_out, versao_inferida = _inferir_versao(data_sinal), 1
     contaminado_rsl = int(data_sinal < DATA_FIX_RSL)
 
+    # Componente PRECIFICAÇÃO: payoff/lucro da estrutura de fato recomendada
+    # (estrutura_otima) por linha -- isola o pricing (strike/custo/breakeven)
+    # do acerto direcional; usado depois para condicionar em acerto_direcao==1.
+    estrutura_otima_str = str(row.get("estrutura_otima", ""))
+    if estrutura_otima_str in ESTRUTURAS_OPC and status == "fechado":
+        payoff_escolhida = payoffs[f"payoff_{estrutura_otima_str}"]
+        lucro_escolhida  = lucros[f"lucro_{estrutura_otima_str}"]
+    else:
+        payoff_escolhida = np.nan
+        lucro_escolhida  = np.nan
+
     return {
         "data_sinal":            data_sinal,
         "ticker":                ticker,
@@ -204,8 +237,16 @@ def _processar_sinal(row: pd.Series, data_sinal: date) -> dict | None:
         "acerto_direcao":        acerto_direcao,
         "retorno_acao":          retorno_acao,
         "acerto_acao":           acerto_acao,
+        # componente volatilidade -- previsto (vol_prediction_ratio, acima) vs realizado
+        "vol_t20":               round(vol_t20, 6) if pd.notna(vol_t20) else np.nan,
+        "vol_realizado_ratio":   vol_realizado_ratio,
+        "acerto_vol_direcao":    acerto_vol_direcao,
+        "erro_vol_ratio":        erro_vol_ratio,
         **payoffs,
         **lucros,
+        # componente precificação -- payoff/lucro só da estrutura de fato recomendada
+        "payoff_escolhida":      payoff_escolhida,
+        "lucro_escolhida":       lucro_escolhida,
     }
 
 
@@ -288,6 +329,63 @@ def _agregar_magnitude_e_estrutura(df_fech_limpo: pd.DataFrame) -> pd.DataFrame:
         "n": n_sem_estrutura, "acerto_direcao": np.nan,
         "lucro_estrutura": np.nan, "payoff_medio": np.nan, "med_abs_M": np.nan,
     })
+
+    return pd.DataFrame(linhas)
+
+
+# ── Agregado por componente: direção × volatilidade × precificação ──────────
+# Separa as 3 etapas do pipeline pra achar onde exatamente o edge (ou o
+# problema) está: direc_prediction, vol_prediction, e o motor de preço da
+# opção (strike/custo/breakeven) são 3 fontes de erro independentes -- um
+# acerto_direcao ruim não diz se a culpa é do modelo de vol ou da estrutura.
+
+N_MIN_COMPONENTE = 15  # amostra mínima pra reportar métrica de um componente
+
+
+def _agregar_por_componente(df_fech_limpo: pd.DataFrame, df_agg_mag: pd.DataFrame) -> pd.DataFrame:
+    linhas = []
+    if df_fech_limpo.empty:
+        return pd.DataFrame(linhas)
+
+    def _linha(componente: str, metrica: str, sub: pd.Series, valor_extra: float | None = None):
+        sub = sub.dropna()
+        n = len(sub)
+        valor = round(float(sub.mean()), 4) if (n > 0 and valor_extra is None) else valor_extra
+        linhas.append({"componente": componente, "metrica": metrica, "n": n, "valor": valor})
+
+    # ── 1) DIREÇÃO: direc_prediction/gate acertou o sinal de Close(T+20)? ────
+    _linha("direcao", "acerto_direcao_geral", df_fech_limpo["acerto_direcao"])
+    terco_grande = df_agg_mag[(df_agg_mag["grupo"] == "magnitude_grande") & (df_agg_mag["estrutura"] == "naked_30")]
+    if not terco_grande.empty:
+        linhas.append({
+            "componente": "direcao", "metrica": "acerto_direcao_terco_movimento_grande",
+            "n": int(terco_grande["n"].iloc[0]), "valor": float(terco_grande["acerto_direcao"].iloc[0]),
+        })
+
+    # ── 2) VOLATILIDADE: vol_prediction_ratio (previsto no sinal) bateu com a
+    # direção real de expansão/contração da vol EWMA(22) 20 pregões depois? ──
+    _linha("volatilidade", "acerto_vol_direcao_geral", df_fech_limpo["acerto_vol_direcao"])
+    prev_expansao  = pd.to_numeric(df_fech_limpo["vol_prediction_ratio"], errors="coerce") >= 1.0
+    _linha("volatilidade", "acerto_quando_previu_EXPANSAO", df_fech_limpo.loc[prev_expansao, "acerto_vol_direcao"])
+    _linha("volatilidade", "acerto_quando_previu_CONTRACAO", df_fech_limpo.loc[~prev_expansao, "acerto_vol_direcao"])
+    _linha("volatilidade", "vies_previsto_menos_realizado", df_fech_limpo["erro_vol_ratio"])
+
+    # ── 3) PRECIFICAÇÃO: dado que a direção saiu certa, a estrutura de opção
+    # de fato recomendada (estrutura_otima) ainda assim deu lucro? Isola o
+    # motor de preço (strike/custo/breakeven) do acerto direcional puro. ─────
+    valida = df_fech_limpo["estrutura_otima"].isin(ESTRUTURAS_OPC.keys())
+    df_rec = df_fech_limpo[valida]
+    _linha("precificacao", "lucro_estrutura_geral", df_rec["lucro_escolhida"])
+    dir_certa = df_rec["acerto_direcao"] == 1
+    _linha("precificacao", "lucro_estrutura_dado_direcao_certa", df_rec.loc[dir_certa, "lucro_escolhida"])
+    dir_errada = df_rec["acerto_direcao"] == 0
+    _linha("precificacao", "lucro_estrutura_dado_direcao_errada", df_rec.loc[dir_errada, "lucro_escolhida"])
+    n_pf = len(df_rec)
+    if n_pf >= N_MIN_COMPONENTE:
+        pf_opcao = _profit_factor(df_rec["payoff_escolhida"])
+        pf_acao  = _profit_factor(df_rec["retorno_acao"])
+        delta = round(pf_opcao - pf_acao, 3) if not (np.isnan(pf_opcao) or np.isnan(pf_acao)) else np.nan
+        linhas.append({"componente": "precificacao", "metrica": "pf_opcao_menos_pf_acao", "n": n_pf, "valor": delta})
 
     return pd.DataFrame(linhas)
 
@@ -434,6 +532,41 @@ def main():
                   f"PF ação: {geral_rec['pf_acao'].iloc[0]:.2f}  "
                   f"(N={int(geral_rec['n'].iloc[0])})")
 
+    # ── Aba por_componente: direção × volatilidade × precificação separados ──
+    df_comp = _agregar_por_componente(df_fech_limpo, df_agg_mag)
+    if not df_comp.empty:
+        def _val(metrica, componente):
+            r = df_comp[(df_comp["metrica"] == metrica) & (df_comp["componente"] == componente)]
+            return (float(r["valor"].iloc[0]), int(r["n"].iloc[0])) if not r.empty and pd.notna(r["valor"].iloc[0]) else (None, 0)
+
+        print("\n── Por componente ──────────────────────────────")
+        v, n = _val("acerto_direcao_geral", "direcao")
+        if v is not None:
+            print(f"Direção — acerto geral: {v:.1%} (N={n})")
+
+        v, n = _val("acerto_vol_direcao_geral", "volatilidade")
+        if v is not None:
+            print(f"Volatilidade — acerto geral (expansão/contração prevista vs realizada 20 pregões depois): {v:.1%} (N={n})")
+        v, n = _val("acerto_quando_previu_EXPANSAO", "volatilidade")
+        if v is not None:
+            print(f"Volatilidade — quando previu EXPANSÃO, expandiu de fato: {v:.1%} (N={n})")
+        v, n = _val("acerto_quando_previu_CONTRACAO", "volatilidade")
+        if v is not None:
+            print(f"Volatilidade — quando previu CONTRAÇÃO, contraiu de fato: {v:.1%} (N={n})")
+        v, n = _val("vies_previsto_menos_realizado", "volatilidade")
+        if v is not None:
+            print(f"Volatilidade — viés (previsto - realizado, >0 = superestima expansão): {v:+.4f} (N={n})")
+
+        v, n = _val("lucro_estrutura_dado_direcao_certa", "precificacao")
+        if v is not None:
+            print(f"Precificação — lucro da estrutura QUANDO a direção saiu certa: {v:.1%} (N={n})")
+        v, n = _val("lucro_estrutura_dado_direcao_errada", "precificacao")
+        if v is not None:
+            print(f"Precificação — lucro da estrutura quando a direção saiu errada: {v:.1%} (N={n})")
+        v, n = _val("pf_opcao_menos_pf_acao", "precificacao")
+        if v is not None:
+            print(f"Precificação — PF opção menos PF ação (>0 = estrutura agrega valor sobre a ação nua): {v:+.3f} (N={n})")
+
     # Parte D: resumo de versões e linhas inferidas
     if "versao_inferida" in df_fech.columns:
         n_inf = int(df_fech["versao_inferida"].sum())
@@ -461,6 +594,7 @@ def main():
         df_real.to_excel(writer, sheet_name="realizados", index=False)
         df_agg.to_excel(writer, sheet_name="agregados", index=False)
         df_agg_mag.to_excel(writer, sheet_name="agregados_magnitude", index=False)
+        df_comp.to_excel(writer, sheet_name="por_componente", index=False)
 
     print(f"\nSalvo em: {SAIDA}")
 
