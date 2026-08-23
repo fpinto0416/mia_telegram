@@ -8,7 +8,11 @@ Uso:
     python realizados.py
 
 Output:
-    realizados_YYYY_MM_DD.xlsx  (abas: realizados, agregados, agregados_magnitude)
+    realizados_YYYY_MM_DD.xlsx  (abas: realizados, agregados, agregados_magnitude
+    -- esta última agora também com ganho_medio_estrutura/perda_media_estrutura e
+    ganho_medio_acao/perda_media_acao, mesma convenção de api_OMQS/hilo/
+    api_OMQS_futuros: tamanho médio de UM sinal vencedor/perdedor, não soma
+    agregada como o profit factor)
 """
 
 import re
@@ -101,6 +105,21 @@ def _profit_factor(retornos: pd.Series) -> float:
     ganhos = r[r > 0].sum()
     perdas = r[r <= 0].sum()
     return round(float(ganhos / abs(perdas)), 3) if perdas != 0 else float("nan")
+
+
+def _ganho_perda_medio(retornos: pd.Series) -> tuple[float, float]:
+    """Tamanho médio de UM sinal vencedor e de UM sinal perdedor -- mesma
+    convenção de api_OMQS/hilo/api_OMQS_futuros (ganho_medio, perda_media na
+    aba resumo daqueles repos). Diferente de _profit_factor: aqui é média por
+    sinal, não soma agregada -- os dois juntam formam o profit factor
+    (ganhos.sum()/|perdas.sum()|), mas não dá pra reconstruir um a partir do
+    outro sem saber N de cada lado."""
+    r = pd.Series(retornos).dropna()
+    ganhos = r[r > 0]
+    perdas = r[r <= 0]
+    ganho_medio = round(float(ganhos.mean()), 4) if len(ganhos) else float("nan")
+    perda_media = round(float(perdas.mean()), 4) if len(perdas) else float("nan")
+    return ganho_medio, perda_media
 
 
 # ── Processa um sinal ─────────────────────────────────────────────────────────
@@ -258,6 +277,8 @@ def _agregar_magnitude_e_estrutura(df_fech_limpo: pd.DataFrame) -> pd.DataFrame:
         df_rec["payoff_escolhida"] = df_rec.apply(lambda r: r[f"payoff_{r['estrutura_otima']}"], axis=1)
         df_rec["lucro_escolhida"]  = df_rec.apply(lambda r: r[f"lucro_{r['estrutura_otima']}"], axis=1)
 
+        ganho_estr, perda_estr = _ganho_perda_medio(df_rec["payoff_escolhida"])
+        ganho_acao, perda_acao = _ganho_perda_medio(df_rec["retorno_acao"])
         linhas.append({
             "grupo": "estrutura_recomendada_geral", "estrutura": "(por sinal)",
             "n":                  len(df_rec),
@@ -266,10 +287,16 @@ def _agregar_magnitude_e_estrutura(df_fech_limpo: pd.DataFrame) -> pd.DataFrame:
             "payoff_medio":       round(float(df_rec["payoff_escolhida"].mean()), 4),
             "med_abs_M":          np.nan,
             "pf_estrutura":       _profit_factor(df_rec["payoff_escolhida"]),
+            "ganho_medio_estrutura": ganho_estr,
+            "perda_media_estrutura": perda_estr,
             "retorno_acao_medio": round(float(df_rec["retorno_acao"].mean()), 4),
             "pf_acao":            _profit_factor(df_rec["retorno_acao"]),
+            "ganho_medio_acao":   ganho_acao,
+            "perda_media_acao":   perda_acao,
         })
         for estrutura, grp in df_rec.groupby("estrutura_otima"):
+            ganho_estr, perda_estr = _ganho_perda_medio(grp["payoff_escolhida"])
+            ganho_acao, perda_acao = _ganho_perda_medio(grp["retorno_acao"])
             linhas.append({
                 "grupo": "estrutura_recomendada_por_tipo", "estrutura": estrutura,
                 "n":                  len(grp),
@@ -278,8 +305,12 @@ def _agregar_magnitude_e_estrutura(df_fech_limpo: pd.DataFrame) -> pd.DataFrame:
                 "payoff_medio":       round(float(grp["payoff_escolhida"].mean()), 4),
                 "med_abs_M":          np.nan,
                 "pf_estrutura":       _profit_factor(grp["payoff_escolhida"]),
+                "ganho_medio_estrutura": ganho_estr,
+                "perda_media_estrutura": perda_estr,
                 "retorno_acao_medio": round(float(grp["retorno_acao"].mean()), 4),
                 "pf_acao":            _profit_factor(grp["retorno_acao"]),
+                "ganho_medio_acao":   ganho_acao,
+                "perda_media_acao":   perda_acao,
             })
 
     n_sem_estrutura = int((~valida).sum())
@@ -344,6 +375,10 @@ def main():
         print(f"Retorno médio da AÇÃO na direção do sinal (limpos): {df_fech_limpo['retorno_acao'].mean():.2%}")
         print(f"PF ação (limpos): {_profit_factor(df_fech_limpo['retorno_acao']):.2f}  |  "
               f"PF opção naked_30 (limpos): {_profit_factor(df_fech_limpo['payoff_naked_30']):.2f}")
+        ganho_acao, perda_acao = _ganho_perda_medio(df_fech_limpo["retorno_acao"])
+        ganho_opc,  perda_opc  = _ganho_perda_medio(df_fech_limpo["payoff_naked_30"])
+        print(f"Ganho/perda médio ação (limpos): {ganho_acao:+.2%} / {perda_acao:+.2%}  |  "
+              f"ganho/perda médio opção naked_30 (limpos): {ganho_opc:+.2%} / {perda_opc:+.2%}")
 
     # ── Aba agregados (todos os _agg rodam sobre df_fech_limpo) ──────────────
     agg_rows = []
