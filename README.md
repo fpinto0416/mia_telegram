@@ -75,3 +75,13 @@ GitHub.
 | `historico_runs.py` | Consolida `ordem_dia_*.xlsx` numa série temporal |
 | `realizados.py` | Cruza sinais passados com o preço realizado 20 pregões depois |
 | `telegram_notify.py` | Lê o xlsx do dia e manda o resumo no Telegram |
+
+## Projeto Ações — Análise Fundamentalista
+
+Subprojeto novo, em `acoes_fundamentalista/`, separado do pipeline de opções
+acima. Coleta diariamente (via `.github/workflows/acoes_fundamentalista_diario.yml`)
+dados fundamentalistas do Yahoo Finance — indicadores, preço-alvo de
+analistas, demonstrações financeiras — para o universo de ações do IBrA
+(Índice Brasil Amplo). Por enquanto é só coleta/acúmulo de histórico; a
+análise em cima disso vem depois. Detalhes em
+[`acoes_fundamentalista/README.md`](acoes_fundamentalista/README.md).

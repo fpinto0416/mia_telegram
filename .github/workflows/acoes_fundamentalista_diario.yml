@@ -1,0 +1,50 @@
+name: Acoes Fundamentalista - Coleta diaria
+
+on:
+  schedule:
+    # Horarios em UTC. Brasilia = UTC-3 (sem horario de verao atualmente).
+    - cron: "0 22 * * 1-5"  # 19:00 BRT, seg-sex — apos o fechamento da B3
+  workflow_dispatch:
+    inputs:
+      force_update_tickers:
+        description: "Forcar atualizacao da lista de tickers do IBrA (mesmo se ainda estiver recente)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: acoes-fundamentalista-diario
+  cancel-in-progress: false
+
+jobs:
+  coleta:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Coletar fundamentos do dia (download_fundamentals.py)
+        env:
+          FORCE_UPDATE: ${{ inputs.force_update_tickers == true && '1' || '' }}
+        run: python acoes_fundamentalista/scripts/download_fundamentals.py
+
+      - name: Commit e push dos resultados
+        run: |
+          git config user.name "acoes-fundamentalista-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add acoes_fundamentalista/dados acoes_fundamentalista/tickers
+          git diff --cached --quiet || git commit -m "Acoes Fundamentalista: coleta automatica $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push
