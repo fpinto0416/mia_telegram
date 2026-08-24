@@ -13,14 +13,17 @@ armazenada.
 acoes_fundamentalista/
 ├── scripts/
 │   ├── update_tickers_ibra.py   # baixa a composição do IBrA direto da B3
-│   └── download_fundamentals.py # coleta diária de fundamentos (yfinance)
+│   ├── download_fundamentals.py # coleta diária de fundamentos (yfinance)
+│   ├── gerar_panorama.py        # gera o painel HTML a partir dos CSVs do dia
+│   └── _template_panorama.html  # template (CSS/JS) usado por gerar_panorama.py
 ├── tickers/
 │   └── ibra_composicao.csv      # universo de tickers (atualizado ~mensalmente)
 └── dados/
     ├── snapshot_diario.csv      # 1 linha/ticker/dia: P/L, P/VP, ROE, DY, margens...
     ├── analyst_insights.csv     # 1 linha/ticker/dia: preço-alvo (low/mean/high), recomendação
     ├── analyst_insights/        # por ticker: histórico de upgrades/downgrades e tendência de recomendação
-    └── financeiro/               # por ticker: DRE, balanço e fluxo de caixa (anual e trimestral)
+    ├── financeiro/               # por ticker: DRE, balanço e fluxo de caixa (anual e trimestral)
+    └── panorama_de_alvos.html    # painel do último dia coletado (ver seção abaixo)
 ```
 
 ## O que é coletado todo dia
@@ -72,18 +75,38 @@ da lista de tickers do IBrA").
 > consulta (mesmo endpoint, sem autenticação). Se a B3 mudar esse endpoint no
 > futuro, é só ajustar `_monta_url`/`B3_ENDPOINT` em `update_tickers_ibra.py`.
 
+## Painel do dia (`panorama_de_alvos.html`)
+
+`gerar_panorama.py` lê os CSVs do dia mais recente e monta um painel HTML
+estático (sem dependência externa, abre em qualquer navegador) com:
+
+- **Top 10 mais abaixo do preço-alvo mínimo** e **Top 10 mais abaixo do
+  preço-alvo médio** — ranking por `(target − preço_atual) / preço_atual`,
+  com uma barra mostrando a faixa low→mean→high dos analistas e onde o
+  preço de hoje cai nela.
+- **Consultar um ativo** — um seletor (dropdown) com todos os tickers
+  coletados no dia; ao escolher um, mostra o preço-alvo e todos os
+  indicadores fundamentalistas daquele ativo (P/L, P/VP, ROE, margens,
+  dividend yield, dívida/patrimônio, beta etc.).
+
+O arquivo é sobrescrito a cada run e fica versionado em
+`dados/panorama_de_alvos.html` — dá pra abrir direto do repositório (ou
+baixar) sem precisar rodar nada.
+
 ## Automação
 
 `.github/workflows/acoes_fundamentalista_diario.yml` roda todo dia útil às
-19:00 (horário de Brasília), depois do fechamento da B3, e faz commit +
-push de `dados/` e `tickers/` de volta pro repositório. Também pode ser
-disparado manualmente pela aba Actions.
+19:00 (horário de Brasília), depois do fechamento da B3: coleta os
+fundamentos (`download_fundamentals.py`), gera o painel
+(`gerar_panorama.py`) e faz commit + push de `dados/` e `tickers/` de volta
+pro repositório. Também pode ser disparado manualmente pela aba Actions.
 
 Rodar localmente:
 
 ```bash
 pip install -r requirements.txt
 python acoes_fundamentalista/scripts/download_fundamentals.py
+python acoes_fundamentalista/scripts/gerar_panorama.py
 ```
 
 ## Próximos passos (não implementados ainda)
