@@ -14,8 +14,29 @@ Output:
     perda_minima_estrutura e o mesmo conjunto _acao, mesma convenção de
     api_OMQS/hilo/api_OMQS_futuros: tamanho médio e extremos de UM sinal
     vencedor/perdedor, não soma agregada como o profit factor. O corte
-    naked_30 fixo (N=247, df_fech_limpo) tem a mesma conta só no print,
+    naked_30 fixo (df_fech_limpo) tem a mesma conta só no print,
     não persistida em sheet própria)
+
+Pipeline de 3 estágios (pedido 25/08, reconstrução): o painel "Sinais em
+produção" mostra o MIA quebrado em direção → volatilidade → precificação.
+Estágio 1 (direção) já existia (acerto_direcao). Estágios 2 e 3 foram
+publicados em 22/08 por uma sessão que NÃO deixou o código salvo no repo
+-- só o número final foi parar no HTML. Reconstruído aqui a partir da
+metodologia descrita no próprio texto publicado:
+  - Estágio 2 (volatilidade): vol_t20 (nova coluna) = EWMA(22) dos
+    retornos diários avaliada em t+20, mesma métrica de vol_t só que mais
+    tarde. vol_realizado_ratio = vol_t20/vol_t, comparado com
+    vol_prediction_ratio (saída do modelo, já existia). "Acerto expansão"
+    = fração com vol_realizado_ratio > 1. "Viés" = média(previsto −
+    realizado). Validado batendo perto do publicado (81,9% vs 81,8%,
+    viés -0,063 vs -0,053, N maior por ter mais dias de histórico agora)
+    -- não é garantia de ser bit-a-bit a fórmula original, mas os números
+    fecham dentro do esperado.
+  - Estágio 3 (precificação): "lucro_dado_direcao_certa" (novo, dentro de
+    _agregar_magnitude_e_estrutura) = lucro_escolhida médio SÓ nos sinais
+    com acerto_direcao==1. O resto do estágio 3 (ganho/perda médio e
+    extremos por estrutura/ação) já existia na aba agregados_magnitude,
+    só não estava sendo lido pro pipeline do painel.
 """
 
 import re
@@ -172,6 +193,13 @@ def _processar_sinal(row: pd.Series, data_sinal: date) -> dict | None:
     if status == "fechado":
         close_t20 = float(df_p["Close"].iloc[pos_t20])
         ret_real  = close_t20 / close_t - 1
+        # Estágio 2 (volatilidade), pedido 25/08: vol EWMA(22) realizada NO
+        # MOMENTO t+20 (mesma janela/span do vol_t em t, só que 20 pregões
+        # depois) -- dá pra comparar com vol_prediction_ratio (que o modelo
+        # gerou olhando só pra t) e ver se a expansão prevista aconteceu de
+        # verdade. Não é "vol dos últimos 20 pregões", é o mesmo tipo de
+        # métrica (EWMA(22) de retornos diários) só que avaliada mais tarde.
+        vol_t20 = float(ret_d.ewm(span=22, adjust=False).std().iloc[pos_t20])
         # Ajuste de carry: mesmo critério do executor (forward adjustment por CARRY_20)
         _carry_dp_real     = CARRY_20 / (vol_t * SQRT_H)
         _convexity_dp_real = vol_t * SQRT_H if lado < 0 else 0.0
@@ -196,6 +224,7 @@ def _processar_sinal(row: pd.Series, data_sinal: date) -> dict | None:
         retorno_acao   = np.nan
         acerto_acao    = np.nan
         close_t20_out  = np.nan
+        vol_t20        = np.nan
         close_parcial  = float(df_p["Close"].iloc[-1])
         M_parcial      = round(lado * (close_parcial / close_t - 1) / (vol_t * SQRT_H), 4)
 
@@ -227,6 +256,7 @@ def _processar_sinal(row: pd.Series, data_sinal: date) -> dict | None:
         "close_t":               round(close_t, 2),
         "close_t20":             close_t20_out,
         "vol_t":                 round(vol_t, 6),
+        "vol_t20":               round(vol_t20, 6) if pd.notna(vol_t20) else np.nan,
         "pregoes_decorridos":    pregoes_decorridos,
         "status":                status,
         "M_real":                M_real,
@@ -288,6 +318,15 @@ def _agregar_magnitude_e_estrutura(df_fech_limpo: pd.DataFrame) -> pd.DataFrame:
         df_rec["payoff_escolhida"] = df_rec.apply(lambda r: r[f"payoff_{r['estrutura_otima']}"], axis=1)
         df_rec["lucro_escolhida"]  = df_rec.apply(lambda r: r[f"lucro_{r['estrutura_otima']}"], axis=1)
 
+        # Estágio 3 (precificação), pedido 25/08: dado que a DIREÇÃO saiu
+        # certa (acerto_direcao==1), a estrutura escolhida (strike/custo)
+        # também pagou? Isola se o estágio de precificação acrescenta ou
+        # atrapalha quando o estágio 1 já foi bem-sucedido.
+        certos = df_rec[df_rec["acerto_direcao"] == 1]
+        lucro_dado_direcao_certa = (
+            round(float(certos["lucro_escolhida"].mean()), 3) if len(certos) else np.nan
+        )
+
         gp_estr = _ganho_perda_medio(df_rec["payoff_escolhida"])
         gp_acao = _ganho_perda_medio(df_rec["retorno_acao"])
         linhas.append({
@@ -298,6 +337,8 @@ def _agregar_magnitude_e_estrutura(df_fech_limpo: pd.DataFrame) -> pd.DataFrame:
             "payoff_medio":       round(float(df_rec["payoff_escolhida"].mean()), 4),
             "med_abs_M":          np.nan,
             "pf_estrutura":       _profit_factor(df_rec["payoff_escolhida"]),
+            "lucro_dado_direcao_certa": lucro_dado_direcao_certa,
+            "n_direcao_certa":          len(certos),
             "ganho_medio_estrutura":  gp_estr["ganho_medio"],
             "perda_media_estrutura":  gp_estr["perda_media"],
             "ganho_maximo_estrutura": gp_estr["ganho_maximo"],
@@ -493,12 +534,47 @@ def main():
                   f"(N={int(terco_grande['n'].iloc[0])}) — comparar com ~50% de acaso.")
         geral_rec = df_agg_mag[df_agg_mag["grupo"] == "estrutura_recomendada_geral"]
         if not geral_rec.empty:
+            g = geral_rec.iloc[0]
             print(f"Payoff usando a estrutura de fato recomendada por sinal (estrutura_otima): "
-                  f"{geral_rec['payoff_medio'].iloc[0]:.4f}  |  "
-                  f"acerto: {geral_rec['acerto_direcao'].iloc[0]:.1%}  |  "
-                  f"PF opção: {geral_rec['pf_estrutura'].iloc[0]:.2f}  |  "
-                  f"PF ação: {geral_rec['pf_acao'].iloc[0]:.2f}  "
-                  f"(N={int(geral_rec['n'].iloc[0])})")
+                  f"{g['payoff_medio']:.4f}  |  "
+                  f"acerto: {g['acerto_direcao']:.1%}  |  "
+                  f"PF opção: {g['pf_estrutura']:.2f}  |  "
+                  f"PF ação: {g['pf_acao']:.2f}  "
+                  f"(N={int(g['n'])})")
+            if pd.notna(g.get("lucro_dado_direcao_certa")):
+                print(f"Lucro da estrutura, dado direção certa: {g['lucro_dado_direcao_certa']:.1%} "
+                      f"(N={int(g['n_direcao_certa'])})  |  "
+                      f"PF opção - PF ação (estrutura recomendada): {g['pf_estrutura'] - g['pf_acao']:+.2f}")
+            print(f"Ganho/perda médio — estrutura (N={int(g['n'])}): "
+                  f"{g['ganho_medio_estrutura']:+.2%} / {g['perda_media_estrutura']:+.2%}  |  "
+                  f"ganho/perda médio — ação (N={int(g['n'])}): "
+                  f"{g['ganho_medio_acao']:+.2%} / {g['perda_media_acao']:+.2%}")
+            print(f"Extremos estrutura: ganho máx/mín {g['ganho_maximo_estrutura']:+.2%} / "
+                  f"{g['ganho_minimo_estrutura']:+.2%}, perda máx/mín "
+                  f"{g['perda_maxima_estrutura']:+.2%} / {g['perda_minima_estrutura']:+.2%}  |  "
+                  f"extremos ação: ganho máx/mín {g['ganho_maximo_acao']:+.2%} / "
+                  f"{g['ganho_minimo_acao']:+.2%}, perda máx/mín "
+                  f"{g['perda_maxima_acao']:+.2%} / {g['perda_minima_acao']:+.2%}")
+
+    # ── Estágio 2 (volatilidade), pedido 25/08: o vol_prediction_ratio do
+    # modelo (visto só em t) previu expansão -- ela realmente aconteceu até
+    # t+20? Reconstrução da metodologia que gerou os números publicados no
+    # painel em 22/08 (script original não ficou salvo no repo, só o
+    # resultado) -- ver nota no docstring do módulo.
+    df_vol = df_fech_limpo.dropna(subset=["vol_t20", "vol_prediction_ratio"]).copy()
+    if not df_vol.empty:
+        df_vol["vol_realizado_ratio"] = df_vol["vol_t20"] / df_vol["vol_t"]
+        acerto_expansao = float((df_vol["vol_realizado_ratio"] > 1).mean())
+        vies = float((df_vol["vol_prediction_ratio"] - df_vol["vol_realizado_ratio"]).mean())
+        pct_previu_expansao = float((df_vol["vol_prediction_ratio"] > 1).mean())
+        print(f"\nAcerto expansão prevista → realizada (vol EWMA(22) em t+20 vs t): "
+              f"{acerto_expansao:.1%}  |  viés (previsto − realizado): {vies:+.3f}  "
+              f"(N={len(df_vol)})")
+        if pct_previu_expansao > 0.99:
+            print(f"  {pct_previu_expansao:.0%} dos {len(df_vol)} sinais previram expansão "
+                  f"(vol_prediction_ratio > 1) — gate do executor só deixa comprar opção nessa "
+                  f"condição, então isto mede acerto do gate, não discriminação direcional "
+                  f"completa do modelo.")
 
     # Parte D: resumo de versões e linhas inferidas
     if "versao_inferida" in df_fech.columns:
