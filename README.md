@@ -78,10 +78,10 @@ GitHub.
 
 ## Projeto Ações — Análise Fundamentalista
 
-Subprojeto novo, em `acoes_fundamentalista/`, separado do pipeline de opções
-acima. Coleta diariamente (via `.github/workflows/acoes_fundamentalista_diario.yml`)
-dados fundamentalistas do Yahoo Finance — indicadores, preço-alvo de
-analistas, demonstrações financeiras — para o universo de ações do IBrA
-(Índice Brasil Amplo). Por enquanto é só coleta/acúmulo de histórico; a
-análise em cima disso vem depois. Detalhes em
-[`acoes_fundamentalista/README.md`](acoes_fundamentalista/README.md).
+Mudou de endereço em 25/08/2026: agora é repo próprio,
+[`github.com/fpinto0416/acoes_fundamentalista`](https://github.com/fpinto0416/acoes_fundamentalista)
+— coleta diária de dados fundamentalistas do Yahoo Finance (indicadores,
+preço-alvo de analistas, demonstrações financeiras) para o universo de
+ações do IBrA, sem relação com o pipeline de opções acima. Histórico
+anterior à mudança (quando ainda era a pasta `acoes_fundamentalista/`
+deste repo) continua disponível via `git log -- acoes_fundamentalista`.
