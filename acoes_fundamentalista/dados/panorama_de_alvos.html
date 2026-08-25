@@ -492,7 +492,38 @@
   }
 </style>
 
+<!--
+  ARQUIVO GERADO — NÃO EDITAR À MÃO.
+  Este HTML é reescrito por inteiro toda vez que
+  scripts/gerar_panorama.py roda (via token __MARCADOR__ → valor, sobre
+  este mesmo arquivo como template) — qualquer edição manual aqui dentro
+  se perde no próximo run. Pra mudar layout/copy, editar
+  scripts/_template_panorama.html; pra mudar os DADOS, é upstream:
+
+  1. scripts/download_fundamentals.py
+     → bate no Yahoo Finance (yfinance) pro universo de tickers em
+       tickers/ibra_composicao.csv, grava/acrescenta 1 linha por ticker
+       em dados/snapshot_diario.csv (indicadores: P/L, P/VP, ROE, margens,
+       dividend yield...) e dados/analyst_insights.csv (preço-alvo
+       low/mean/median/high, recomendação consolidada, nº de analistas —
+       é este 2º arquivo que alimenta os rankings abaixo).
+     → roda 1x/dia útil via .github/workflows/acoes_fundamentalista_diario.yml
+       (19:00 BRT, depois do fechamento da B3).
+  2. scripts/gerar_panorama.py
+     → lê a linha mais recente de cada CSV acima (carregar_dados()),
+       calcula dist_low_pct/dist_mean_pct = (alvo − preço_atual)/preço_atual
+       por ticker, ordena por essas colunas pros 2 rankings Top 10, e monta
+       o JSON usado pelo seletor "Consultar um ativo" (ATIVOS no <script>
+       no fim do arquivo).
+     → chamado no fim do mesmo workflow, depois do download.
+
+  Pra atualizar o painel publicado como Artifact: git pull no repo
+  mia_telegram, rodar (ou esperar o workflow rodar) os dois scripts acima,
+  e publicar de novo dados/panorama_de_alvos.html — sem editar nada deste
+  arquivo à mão.
+-->
 <div class="wrap">
+  <!-- fonte: data/hora do cabeçalho e as contagens de universo/cobertura vêm todas de gerar_panorama.py:gerar() (variáveis data_ref, gerado_em, total_universo, cobertura) -->
   <header class="masthead">
     <span class="eyebrow">Projeto Ações · Análise Fundamentalista</span>
     <h1>Panorama de alvos do dia</h1>
@@ -504,10 +535,11 @@
       <span>Pregão de referência: <b>24/08/2026</b></span>
       <span>Universo IBrA: <b>152 tickers</b></span>
       <span>Com preço-alvo publicado: <b>144 tickers</b></span>
-      <span>Gerado em 24/08/2026 às 22:39</span>
+      <span>Gerado em 25/08/2026 às 00:35</span>
     </div>
   </header>
 
+  <!-- fonte: dist_medias (mediana de dist_mean_pct) e maior_desconto (max de dist_low_pct) sobre todos os tickers com alvo, calculados em gerar_panorama.py -->
   <section class="stats">
     <div class="stat">
       <span class="stat-label">Universo (IBrA)</span>
@@ -527,6 +559,13 @@
     </div>
   </section>
 
+  <!--
+    fonte: dados/analyst_insights.csv (colunas target_low/target_mean, mais
+    o preço de fechamento do dia) — gerar_panorama.py ordena por
+    dist_low_pct/dist_mean_pct desc. e pega os 10 primeiros de cada
+    (variáveis top_low/top_mean, uma lista renderizada por painel). A barrinha
+    low→mean→high de cada linha usa target_low/mean/high + preço atual.
+  -->
   <section class="panels">
     <div class="panel">
       <div class="panel-head">
@@ -1071,6 +1110,15 @@
     </div>
   </section>
 
+  <!--
+    fonte: TODOS os tickers coletados no dia (não só os 10 de cada
+    ranking) — options_html lista tickers_ordenados; o detalhe de cada um
+    (preço-alvo + os ~15 indicadores de FUNDAMENTOS_LABELS: P/L, P/VP,
+    ROE, margens, dividend yield, dívida/patrimônio, beta...) vem do JSON
+    `registros` (ATIVOS no <script> abaixo), montado em memória por
+    gerar_panorama.py a partir de snapshot_diario.csv + analyst_insights.csv
+    -- renderizado no browser via JS (renderAtivo), não no Python.
+  -->
   <section class="picker-section">
     <div class="section-head">
       <h2>Consultar um ativo</h2>
