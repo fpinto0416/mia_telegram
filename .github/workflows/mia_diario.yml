@@ -48,6 +48,14 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git add database saidas log_projeto_executor_v5_5.txt
           git diff --cached --quiet || git commit -m "MIA: run automatico $(date -u +'%Y-%m-%d %H:%M UTC')"
+          # rodada agendada pode disparar bem atrasada (fila do GitHub
+          # Actions) e colidir com outro push feito nesse meio-tempo (ex.:
+          # backfill manual) -- rebase antes do push em vez de um git push
+          # cru, senão a rodada inteira se perde com "! [rejected] ...
+          # (fetch first)" (aconteceu de verdade em 27/08, rodada de 26/08
+          # disparando ~3h30 atrasada).
+          git fetch origin main
+          git rebase origin/main
           git push
 
       - name: Notificar Telegram
