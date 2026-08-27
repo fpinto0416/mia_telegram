@@ -1,10 +1,10 @@
 VERSAO EXECUTOR: v5.5_executor_diario
 Arquivo em execução: /home/runner/work/mia_telegram/mia_telegram/executor.py
-Data de referência: 2026-08-25
+Data de referência: 2026-08-27
 ✓ Artefato direction selecionado: direction_best_2026_08_19.xlsx
-  Data do artefato direction: 2026-08-19 | idade: 6 dias
+  Data do artefato direction: 2026-08-19 | idade: 8 dias
 ✓ Artefato volatility selecionado: volatility_best_2026_08_19_v6_2_operational.xlsx
-  Data do artefato volatility: 2026-08-19 | idade: 6 dias
+  Data do artefato volatility: 2026-08-19 | idade: 8 dias
 ✓ Direction Executor_Input: /home/runner/work/mia_telegram/mia_telegram/saidas/direction/direction_best_2026_08_19.xlsx
 ✓ Volatility Executor_Input: /home/runner/work/mia_telegram/mia_telegram/saidas/volatility/volatility_best_2026_08_19_v6_2_operational.xlsx
 Colunas direction encontradas: ['data', 'ticker', 'mae_val', 'razao_mae', 'gap_teste_val', 'rmse_mae_val', 'accuracy_direcional', 'precision_macro', 'precision_up', 'precision_down', 'recall_macro', 'recall_up', 'recall_down', 'modelo_escolhido', 'n_features', 'n_features_efetivas', 'n_aprovados', 'estabilidade_ok', 'edge_up_ok', 'edge_down_ok', 'edge_up_persistente', 'edge_down_persistente', 'direction_model_ok_exec_up', 'direction_model_ok_exec_down', 'direction_model_ok_exec_side', 'classe_executor_direction', 'direction_quality_score_adj', 'direction_up_score', 'direction_down_score', 'features_efetivas', 'sinal_confiavel']
@@ -51,16 +51,16 @@ Gates: CALL=0 | PUT=0 | Nível=B | VolExec=0 | DirClasse=exec_bilateral | VolCla
 Resultados para BOVA11:
 Ordem: Neutro
 Nível live: B
-Motivo executor: razao_sinal_baixa
+Motivo executor: volatility_gate_bloqueado:expansao_moderada_sem_exec_forte
 Número de operações históricas: 23
 Taxa de acertos: 69.6%
 GMDP: 1.21
 Esperança ganho DP: 0.43
-Direção live: 0.011412
-Razão sinal live: 0.35
-Vol previsão ratio live: 0.921 (-7.9%)
+Direção live: 0.041790
+Razão sinal live: 1.35
+Vol previsão ratio live: 0.944 (-5.6%)
 Vol thresholds mod/forte/comp: 1.055 / 1.108 / 0.970
-rv_rank_252/ivrank proxy: 0.47
+rv_rank_252/ivrank proxy: 0.44
 Target: 0.00
 
 ==========================================================================================
@@ -74,11 +74,11 @@ Número de operações históricas: 22
 Taxa de acertos: 54.5%
 GMDP: -0.13
 Esperança ganho DP: -0.06
-Direção live: -0.020042
-Razão sinal live: 0.43
-Vol previsão ratio live: 0.953 (-4.7%)
+Direção live: -0.011351
+Razão sinal live: 0.25
+Vol previsão ratio live: 0.957 (-4.3%)
 Vol thresholds mod/forte/comp: 1.052 / 1.080 / 0.852
-rv_rank_252/ivrank proxy: 0.43
+rv_rank_252/ivrank proxy: 0.39
 Target: 0.00
 
 ==========================================================================================
@@ -93,30 +93,30 @@ Número de operações históricas: 165
 Taxa de acertos: 72.7%
 GMDP: 0.86
 Esperança ganho DP: 0.66
-Direção live: 0.082317
-Razão sinal live: 1.87
-Vol previsão ratio live: 1.091 (+9.1%)
+Direção live: 0.088488
+Razão sinal live: 2.07
+Vol previsão ratio live: 1.081 (+8.1%)
 Vol thresholds mod/forte/comp: 1.030 / 1.080 / 0.970
-rv_rank_252/ivrank proxy: 0.51
-Target: 81.59
+rv_rank_252/ivrank proxy: 0.49
+Target: 81.25
 
 ==========================================================================================
 PROCESSANDO BBDC4
 Gates: CALL=0 | PUT=0 | Nível=B | VolExec=0 | DirClasse=exec_bilateral | VolClasse=expansion_moderada
 Resultados para BBDC4:
-Ordem: Alerta PUT
+Ordem: Neutro
 Nível live: B
-Motivo executor: alerta_executor_nivel_B
+Motivo executor: razao_sinal_baixa
 Número de operações históricas: 177
 Taxa de acertos: 66.7%
 GMDP: 0.10
 Esperança ganho DP: 0.21
-Direção live: -0.056753
-Razão sinal live: 1.17
-Vol previsão ratio live: 1.266 (+26.6%)
+Direção live: -0.020161
+Razão sinal live: 0.42
+Vol previsão ratio live: 1.218 (+21.8%)
 Vol thresholds mod/forte/comp: 1.107 / 1.219 / 0.970
-rv_rank_252/ivrank proxy: 0.58
-Target: 16.10
+rv_rank_252/ivrank proxy: 0.56
+Target: 0.00
 
 ==========================================================================================
 PROCESSANDO SMAL11
@@ -130,11 +130,11 @@ Número de operações históricas: 30
 Taxa de acertos: 40.0%
 GMDP: -0.18
 Esperança ganho DP: -0.09
-Direção live: -0.016265
-Razão sinal live: 0.41
-Vol previsão ratio live: 1.141 (+14.1%)
+Direção live: 0.012392
+Razão sinal live: 0.31
+Vol previsão ratio live: 1.127 (+12.7%)
 Vol thresholds mod/forte/comp: 1.145 / 1.145 / 0.884
-rv_rank_252/ivrank proxy: 0.31
+rv_rank_252/ivrank proxy: 0.32
 Target: 0.00
 
 ==========================================================================================
@@ -148,11 +148,11 @@ Número de operações históricas: 65
 Taxa de acertos: 32.3%
 GMDP: -0.13
 Esperança ganho DP: -0.06
-Direção live: 0.007035
-Razão sinal live: 0.11
-Vol previsão ratio live: 0.999 (-0.1%)
+Direção live: 0.026643
+Razão sinal live: 0.43
+Vol previsão ratio live: 1.018 (+1.8%)
 Vol thresholds mod/forte/comp: 1.078 / 1.147 / 0.879
-rv_rank_252/ivrank proxy: 0.45
+rv_rank_252/ivrank proxy: 0.41
 Target: 0.00
 
 ==========================================================================================
@@ -167,11 +167,11 @@ Número de operações históricas: 96
 Taxa de acertos: 51.0%
 GMDP: 0.45
 Esperança ganho DP: 0.29
-Direção live: -0.005032
-Razão sinal live: 0.04
-Vol previsão ratio live: 1.006 (+0.6%)
+Direção live: 0.035357
+Razão sinal live: 0.27
+Vol previsão ratio live: 1.019 (+1.9%)
 Vol thresholds mod/forte/comp: 1.144 / 1.144 / 0.843
-rv_rank_252/ivrank proxy: 1.00
+rv_rank_252/ivrank proxy: 0.95
 Target: 0.00
 
 ==========================================================================================
@@ -186,11 +186,11 @@ Número de operações históricas: 100
 Taxa de acertos: 41.0%
 GMDP: 0.11
 Esperança ganho DP: 0.03
-Direção live: 0.004612
-Razão sinal live: 0.09
-Vol previsão ratio live: 1.114 (+11.4%)
+Direção live: -0.010041
+Razão sinal live: 0.21
+Vol previsão ratio live: 1.148 (+14.8%)
 Vol thresholds mod/forte/comp: 1.102 / 1.102 / 0.970
-rv_rank_252/ivrank proxy: 0.41
+rv_rank_252/ivrank proxy: 0.37
 Target: 0.00
 
 ==========================================================================================
@@ -205,11 +205,11 @@ Número de operações históricas: 69
 Taxa de acertos: 76.8%
 GMDP: 0.55
 Esperança ganho DP: 0.33
-Direção live: 0.088360
-Razão sinal live: 1.56
-Vol previsão ratio live: 0.963 (-3.7%)
+Direção live: 0.095894
+Razão sinal live: 1.74
+Vol previsão ratio live: 0.987 (-1.3%)
 Vol thresholds mod/forte/comp: 1.079 / 1.082 / 0.970
-rv_rank_252/ivrank proxy: 0.36
+rv_rank_252/ivrank proxy: 0.34
 Target: 0.00
 
 ==========================================================================================
@@ -223,9 +223,9 @@ Número de operações históricas: 126
 Taxa de acertos: 67.5%
 GMDP: 0.46
 Esperança ganho DP: 0.24
-Direção live: -0.096754
-Razão sinal live: 1.60
-Vol previsão ratio live: 1.156 (+15.6%)
+Direção live: -0.062003
+Razão sinal live: 1.02
+Vol previsão ratio live: 1.045 (+4.5%)
 Vol thresholds mod/forte/comp: 1.083 / 1.110 / 0.794
 rv_rank_252/ivrank proxy: 0.73
 Target: 0.00
@@ -242,11 +242,11 @@ Número de operações históricas: 32
 Taxa de acertos: 65.6%
 GMDP: 0.11
 Esperança ganho DP: 0.20
-Direção live: -0.083307
-Razão sinal live: 1.00
-Vol previsão ratio live: 0.937 (-6.3%)
+Direção live: -0.078205
+Razão sinal live: 0.97
+Vol previsão ratio live: 0.955 (-4.5%)
 Vol thresholds mod/forte/comp: 1.030 / 1.080 / 0.970
-rv_rank_252/ivrank proxy: 0.71
+rv_rank_252/ivrank proxy: 0.67
 Target: 0.00
 
 ==========================================================================================
@@ -255,16 +255,16 @@ Gates: CALL=0 | PUT=0 | Nível=B | VolExec=0 | DirClasse=exec_alta | VolClasse=e
 Resultados para BBSE3:
 Ordem: Neutro
 Nível live: B
-Motivo executor: razao_sinal_baixa
+Motivo executor: razao_sinal_marginal_sem_condicoes
 Número de operações históricas: 47
 Taxa de acertos: 61.7%
 GMDP: 0.09
 Esperança ganho DP: 0.01
-Direção live: 0.014485
-Razão sinal live: 0.35
-Vol previsão ratio live: 0.897 (-10.3%)
+Direção live: 0.026448
+Razão sinal live: 0.65
+Vol previsão ratio live: 0.882 (-11.8%)
 Vol thresholds mod/forte/comp: 1.125 / 1.286 / 0.884
-rv_rank_252/ivrank proxy: 0.62
+rv_rank_252/ivrank proxy: 0.59
 Target: 0.00
 
 ==========================================================================================
@@ -279,11 +279,11 @@ Número de operações históricas: 73
 Taxa de acertos: 31.5%
 GMDP: -0.05
 Esperança ganho DP: -0.09
-Direção live: 0.107611
-Razão sinal live: 0.99
-Vol previsão ratio live: 0.903 (-9.7%)
+Direção live: 0.120871
+Razão sinal live: 1.17
+Vol previsão ratio live: 0.909 (-9.1%)
 Vol thresholds mod/forte/comp: 1.071 / 1.092 / 0.969
-rv_rank_252/ivrank proxy: 0.66
+rv_rank_252/ivrank proxy: 0.60
 Target: 0.00
 
 ==========================================================================================
@@ -297,11 +297,11 @@ Número de operações históricas: 17
 Taxa de acertos: 41.2%
 GMDP: 0.04
 Esperança ganho DP: 0.13
-Direção live: -0.004142
-Razão sinal live: 0.14
-Vol previsão ratio live: 1.309 (+30.9%)
+Direção live: 0.000294
+Razão sinal live: 0.01
+Vol previsão ratio live: 1.306 (+30.6%)
 Vol thresholds mod/forte/comp: 1.030 / 1.180 / 0.968
-rv_rank_252/ivrank proxy: 0.02
+rv_rank_252/ivrank proxy: 0.01
 Target: 0.00
 
 ==========================================================================================
@@ -311,16 +311,16 @@ Gates: CALL=0 | PUT=0 | Nível=B | VolExec=0 | DirClasse=exec_baixa | VolClasse=
 Resultados para CSNA3:
 Ordem: Neutro
 Nível live: B
-Motivo executor: razao_sinal_baixa
+Motivo executor: volatility_gate_bloqueado:expansao_moderada_sem_exec_forte
 Número de operações históricas: 0
 Taxa de acertos: 0.0%
 GMDP: -0.18
 Esperança ganho DP: -0.18
-Direção live: 0.057635
-Razão sinal live: 0.49
-Vol previsão ratio live: 0.793 (-20.7%)
+Direção live: 0.117341
+Razão sinal live: 1.01
+Vol previsão ratio live: 0.806 (-19.4%)
 Vol thresholds mod/forte/comp: 1.108 / 1.108 / 0.970
-rv_rank_252/ivrank proxy: 0.69
+rv_rank_252/ivrank proxy: 0.67
 Target: 0.00
 
 ==========================================================================================
@@ -330,16 +330,16 @@ Gates: CALL=0 | PUT=0 | Nível=B | VolExec=0 | DirClasse=exec_baixa | VolClasse=
 Resultados para RENT3:
 Ordem: Neutro
 Nível live: B
-Motivo executor: razao_sinal_marginal_sem_condicoes
+Motivo executor: razao_sinal_baixa
 Número de operações históricas: 21
 Taxa de acertos: 23.8%
 GMDP: 0.49
 Esperança ganho DP: -0.02
-Direção live: -0.055470
-Razão sinal live: 0.66
-Vol previsão ratio live: 1.045 (+4.5%)
+Direção live: -0.030841
+Razão sinal live: 0.38
+Vol previsão ratio live: 1.044 (+4.4%)
 Vol thresholds mod/forte/comp: 1.058 / 1.151 / 0.875
-rv_rank_252/ivrank proxy: 0.66
+rv_rank_252/ivrank proxy: 0.61
 Target: 0.00
 
 ==========================================================================================
@@ -348,34 +348,34 @@ Gates: CALL=0 | PUT=0 | Nível=B | VolExec=0 | DirClasse=exec_bilateral | VolCla
 Resultados para TAEE11:
 Ordem: Neutro
 Nível live: B
-Motivo executor: razao_sinal_baixa
+Motivo executor: volatility_gate_bloqueado:expansao_moderada_sem_exec_forte
 Número de operações históricas: 94
 Taxa de acertos: 73.4%
 GMDP: 0.12
 Esperança ganho DP: 0.69
-Direção live: 0.001278
-Razão sinal live: 0.04
+Direção live: 0.030142
+Razão sinal live: 0.87
 Vol previsão ratio live: 0.911 (-8.9%)
 Vol thresholds mod/forte/comp: 1.073 / 1.185 / 0.913
-rv_rank_252/ivrank proxy: 0.51
+rv_rank_252/ivrank proxy: 0.47
 Target: 0.00
 
 ==========================================================================================
 PROCESSANDO CYRE3
 Gates: CALL=1 | PUT=1 | Nível=A | VolExec=1 | DirClasse=exec_bilateral | VolClasse=exec_expansion_alerta_gap
 Resultados para CYRE3:
-Ordem: Monitorar CALL
+Ordem: Neutro
 Nível live: A
-Motivo executor: monitorar_e6_quase_nivel_a
+Motivo executor: vol_live_sem_expansao
 Número de operações históricas: 40
 Taxa de acertos: 60.0%
 GMDP: 0.01
 Esperança ganho DP: 0.28
-Direção live: 0.128471
-Razão sinal live: 1.96
-Vol previsão ratio live: 1.003 (+0.3%)
+Direção live: 0.104802
+Razão sinal live: 1.51
+Vol previsão ratio live: 0.990 (-1.0%)
 Vol thresholds mod/forte/comp: 1.077 / 1.088 / 0.943
-rv_rank_252/ivrank proxy: 0.26
+rv_rank_252/ivrank proxy: 0.28
 Target: 0.00
 
 ==========================================================================================
@@ -390,11 +390,11 @@ Número de operações históricas: 28
 Taxa de acertos: 96.4%
 GMDP: 0.07
 Esperança ganho DP: 0.50
-Direção live: 0.028527
-Razão sinal live: 0.30
-Vol previsão ratio live: 0.693 (-30.7%)
+Direção live: 0.037333
+Razão sinal live: 0.40
+Vol previsão ratio live: 0.722 (-27.8%)
 Vol thresholds mod/forte/comp: 1.093 / 1.204 / 0.970
-rv_rank_252/ivrank proxy: 0.80
+rv_rank_252/ivrank proxy: 0.77
 Target: 0.00
 
 ==========================================================================================
@@ -404,15 +404,15 @@ Resultados para SBSP3:
 Ordem: Neutro
 Nível live: B
 Motivo executor: razao_sinal_baixa
-Número de operações históricas: 180
-Taxa de acertos: 43.3%
+Número de operações históricas: 181
+Taxa de acertos: 43.6%
 GMDP: 0.10
 Esperança ganho DP: -0.01
-Direção live: -0.030209
-Razão sinal live: 0.45
-Vol previsão ratio live: 0.815 (-18.5%)
+Direção live: 0.006888
+Razão sinal live: 0.10
+Vol previsão ratio live: 0.817 (-18.3%)
 Vol thresholds mod/forte/comp: 1.030 / 1.139 / 0.881
-rv_rank_252/ivrank proxy: 0.82
+rv_rank_252/ivrank proxy: 0.85
 Target: 0.00
 
 ==========================================================================================
@@ -420,36 +420,36 @@ PROCESSANDO GOAU4
 Gates: CALL=0 | PUT=0 | Nível=B | VolExec=0 | DirClasse=exec_bilateral | VolClasse=expansion_moderada
   [GOAU4] vol_prediction via RV_RANK gate (sem_modelo + expansion_rank forte)
 Resultados para GOAU4:
-Ordem: Alerta PUT
+Ordem: Neutro
 Nível live: B
-Motivo executor: alerta_executor_nivel_B
+Motivo executor: volatility_gate_bloqueado:expansao_moderada_sem_exec_forte
 Número de operações históricas: 145
 Taxa de acertos: 68.3%
 GMDP: 0.23
 Esperança ganho DP: 0.15
-Direção live: -0.100906
-Razão sinal live: 1.74
-Vol previsão ratio live: 1.082 (+8.2%)
+Direção live: -0.082520
+Razão sinal live: 1.45
+Vol previsão ratio live: 1.034 (+3.4%)
 Vol thresholds mod/forte/comp: 1.052 / 1.138 / 0.970
-rv_rank_252/ivrank proxy: 0.69
-Target: 9.36
+rv_rank_252/ivrank proxy: 0.66
+Target: 0.00
 
 ==========================================================================================
 PROCESSANDO EGIE3
 Gates: CALL=1 | PUT=1 | Nível=A | VolExec=1 | DirClasse=exec_bilateral | VolClasse=exec_expansion_alerta_gap
 Resultados para EGIE3:
-Ordem: Neutro
+Ordem: Monitorar CALL
 Nível live: A
-Motivo executor: razao_sinal_baixa
+Motivo executor: monitorar_e6_quase_nivel_a
 Número de operações históricas: 30
 Taxa de acertos: 66.7%
 GMDP: 0.13
 Esperança ganho DP: 0.02
-Direção live: 0.018689
-Razão sinal live: 0.43
-Vol previsão ratio live: 1.041 (+4.1%)
+Direção live: 0.036929
+Razão sinal live: 0.90
+Vol previsão ratio live: 1.062 (+6.2%)
 Vol thresholds mod/forte/comp: 1.093 / 1.111 / 0.933
-rv_rank_252/ivrank proxy: 0.40
+rv_rank_252/ivrank proxy: 0.36
 Target: 0.00
 
 ==========================================================================================
@@ -464,30 +464,30 @@ Número de operações históricas: 149
 Taxa de acertos: 65.1%
 GMDP: 1.01
 Esperança ganho DP: 0.57
-Direção live: 0.049937
-Razão sinal live: 1.03
-Vol previsão ratio live: 1.006 (+0.6%)
+Direção live: 0.061599
+Razão sinal live: 1.33
+Vol previsão ratio live: 0.975 (-2.5%)
 Vol thresholds mod/forte/comp: 1.045 / 1.080 / 0.969
-rv_rank_252/ivrank proxy: 0.58
+rv_rank_252/ivrank proxy: 0.54
 Target: 0.00
 
 ==========================================================================================
 PROCESSANDO BRKM5
 Gates: CALL=0 | PUT=0 | Nível=B | VolExec=0 | DirClasse=exec_bilateral | VolClasse=expansion_moderada
 Resultados para BRKM5:
-Ordem: Alerta PUT
+Ordem: Neutro
 Nível live: B
-Motivo executor: alerta_executor_nivel_B
+Motivo executor: volatility_gate_bloqueado:expansao_moderada_sem_exec_forte
 Número de operações históricas: 112
 Taxa de acertos: 50.9%
 GMDP: 0.30
 Esperança ganho DP: 0.20
-Direção live: -0.265664
-Razão sinal live: 1.89
-Vol previsão ratio live: 1.044 (+4.4%)
+Direção live: -0.359484
+Razão sinal live: 2.17
+Vol previsão ratio live: 0.976 (-2.4%)
 Vol thresholds mod/forte/comp: 1.030 / 1.175 / 0.808
-rv_rank_252/ivrank proxy: 0.40
-Target: 3.63
+rv_rank_252/ivrank proxy: 0.53
+Target: 0.00
 
 ==========================================================================================
 PROCESSANDO DIRR3
@@ -500,11 +500,11 @@ Número de operações históricas: 45
 Taxa de acertos: 40.0%
 GMDP: -0.04
 Esperança ganho DP: -0.04
-Direção live: 0.011748
-Razão sinal live: 0.15
-Vol previsão ratio live: 0.959 (-4.1%)
+Direção live: 0.014174
+Razão sinal live: 0.18
+Vol previsão ratio live: 0.981 (-1.9%)
 Vol thresholds mod/forte/comp: 1.161 / 1.175 / 0.970
-rv_rank_252/ivrank proxy: 0.71
+rv_rank_252/ivrank proxy: 0.70
 Target: 0.00
 
 ==========================================================================================
@@ -513,16 +513,16 @@ Gates: CALL=0 | PUT=0 | Nível=B | VolExec=0 | DirClasse=exec_baixa | VolClasse=
 Resultados para BEEF3:
 Ordem: Neutro
 Nível live: B
-Motivo executor: razao_sinal_marginal_sem_condicoes
+Motivo executor: volatility_gate_bloqueado:expansao_moderada_sem_exec_forte
 Número de operações históricas: 22
 Taxa de acertos: 63.6%
 GMDP: -0.10
 Esperança ganho DP: 0.60
-Direção live: 0.085715
-Razão sinal live: 0.80
+Direção live: 0.096769
+Razão sinal live: 0.94
 Vol previsão ratio live: 0.475 (-52.5%)
 Vol thresholds mod/forte/comp: 1.030 / 1.110 / 0.935
-rv_rank_252/ivrank proxy: 0.76
+rv_rank_252/ivrank proxy: 0.71
 Target: 0.00
 
 ==========================================================================================
@@ -533,15 +533,15 @@ Resultados para POMO4:
 Ordem: Neutro
 Nível live: B
 Motivo executor: razao_sinal_baixa
-Número de operações históricas: 140
-Taxa de acertos: 62.9%
+Número de operações históricas: 139
+Taxa de acertos: 63.3%
 GMDP: 0.17
 Esperança ganho DP: 0.28
-Direção live: -0.009795
-Razão sinal live: 0.12
-Vol previsão ratio live: 0.903 (-9.7%)
+Direção live: 0.012812
+Razão sinal live: 0.16
+Vol previsão ratio live: 0.892 (-10.8%)
 Vol thresholds mod/forte/comp: 1.030 / 1.086 / 0.936
-rv_rank_252/ivrank proxy: 0.70
+rv_rank_252/ivrank proxy: 0.66
 Target: 0.00
 
 ==========================================================================================
@@ -549,19 +549,19 @@ PROCESSANDO CPLE3
 Gates: CALL=0 | PUT=0 | Nível=B | VolExec=0 | DirClasse=exec_alta | VolClasse=expansion_moderada_har
   [CPLE3] vol_prediction via HAR fallback
 Resultados para CPLE3:
-Ordem: Neutro
+Ordem: Alerta CALL
 Nível live: B
-Motivo executor: razao_sinal_baixa
+Motivo executor: alerta_executor_nivel_B
 Número de operações históricas: 131
 Taxa de acertos: 73.3%
 GMDP: -0.15
 Esperança ganho DP: 0.16
-Direção live: 0.012297
-Razão sinal live: 0.30
-Vol previsão ratio live: 1.184 (+18.4%)
+Direção live: 0.036748
+Razão sinal live: 0.94
+Vol previsão ratio live: 1.186 (+18.6%)
 Vol thresholds mod/forte/comp: 1.122 / 1.122 / 0.846
-rv_rank_252/ivrank proxy: 0.29
-Target: 0.00
+rv_rank_252/ivrank proxy: 0.25
+Target: 15.13
 
 ==========================================================================================
 PROCESSANDO KLBN11
@@ -571,15 +571,15 @@ Resultados para KLBN11:
 Ordem: Monitorar CALL
 Nível live: A
 Motivo executor: monitorar_e6_quase_nivel_a
-Número de operações históricas: 68
-Taxa de acertos: 77.9%
+Número de operações históricas: 69
+Taxa de acertos: 78.3%
 GMDP: -0.16
 Esperança ganho DP: -0.03
-Direção live: 0.062368
-Razão sinal live: 1.69
-Vol previsão ratio live: 1.073 (+7.3%)
+Direção live: 0.065026
+Razão sinal live: 1.83
+Vol previsão ratio live: 1.087 (+8.7%)
 Vol thresholds mod/forte/comp: 1.114 / 1.117 / 0.874
-rv_rank_252/ivrank proxy: 0.38
+rv_rank_252/ivrank proxy: 0.35
 Target: 0.00
 
 ==========================================================================================
@@ -588,16 +588,16 @@ Gates: CALL=0 | PUT=1 | Nível=A | VolExec=1 | DirClasse=exec_baixa | VolClasse=
 Resultados para ALOS3:
 Ordem: Neutro
 Nível live: A
-Motivo executor: razao_sinal_baixa
+Motivo executor: razao_sinal_marginal_sem_condicoes
 Número de operações históricas: 15
 Taxa de acertos: 0.0%
 GMDP: -0.18
 Esperança ganho DP: -0.18
-Direção live: 0.007419
-Razão sinal live: 0.17
-Vol previsão ratio live: 1.007 (+0.7%)
+Direção live: 0.026313
+Razão sinal live: 0.62
+Vol previsão ratio live: 1.023 (+2.3%)
 Vol thresholds mod/forte/comp: 1.036 / 1.080 / 0.897
-rv_rank_252/ivrank proxy: 0.35
+rv_rank_252/ivrank proxy: 0.32
 Target: 0.00
 
 ==========================================================================================
@@ -611,30 +611,30 @@ Número de operações históricas: 18
 Taxa de acertos: 22.2%
 GMDP: 2.33
 Esperança ganho DP: 0.39
-Direção live: 0.031928
-Razão sinal live: 0.55
-Vol previsão ratio live: 0.776 (-22.4%)
+Direção live: 0.027501
+Razão sinal live: 0.49
+Vol previsão ratio live: 0.764 (-23.6%)
 Vol thresholds mod/forte/comp: 1.125 / 1.125 / 0.806
-rv_rank_252/ivrank proxy: 0.47
+rv_rank_252/ivrank proxy: 0.44
 Target: 0.00
 
 ==========================================================================================
 PROCESSANDO HYPE3
 Gates: CALL=0 | PUT=0 | Nível=B | VolExec=0 | DirClasse=exec_bilateral | VolClasse=expansion_moderada
 Resultados para HYPE3:
-Ordem: Neutro
+Ordem: Alerta CALL
 Nível live: B
-Motivo executor: razao_sinal_baixa
+Motivo executor: alerta_executor_nivel_B
 Número de operações históricas: 66
 Taxa de acertos: 31.8%
 GMDP: -0.10
 Esperança ganho DP: 0.02
-Direção live: 0.014997
-Razão sinal live: 0.32
-Vol previsão ratio live: 1.039 (+3.9%)
+Direção live: 0.040233
+Razão sinal live: 0.90
+Vol previsão ratio live: 1.041 (+4.1%)
 Vol thresholds mod/forte/comp: 1.030 / 1.271 / 0.970
-rv_rank_252/ivrank proxy: 0.16
-Target: 0.00
+rv_rank_252/ivrank proxy: 0.13
+Target: 22.83
 
 ==========================================================================================
 PROCESSANDO MULT3
@@ -647,11 +647,11 @@ Número de operações históricas: 25
 Taxa de acertos: 28.0%
 GMDP: 0.52
 Esperança ganho DP: 0.03
-Direção live: -0.005429
-Razão sinal live: 0.12
-Vol previsão ratio live: 0.885 (-11.5%)
+Direção live: 0.023384
+Razão sinal live: 0.52
+Vol previsão ratio live: 0.932 (-6.8%)
 Vol thresholds mod/forte/comp: 1.034 / 1.080 / 0.970
-rv_rank_252/ivrank proxy: 0.42
+rv_rank_252/ivrank proxy: 0.39
 Target: 0.00
 
 ==========================================================================================
@@ -665,11 +665,11 @@ Número de operações históricas: 20
 Taxa de acertos: 85.0%
 GMDP: 0.26
 Esperança ganho DP: 0.26
-Direção live: -0.069110
-Razão sinal live: 1.20
-Vol previsão ratio live: 0.886 (-11.4%)
+Direção live: -0.059888
+Razão sinal live: 1.08
+Vol previsão ratio live: 0.889 (-11.1%)
 Vol thresholds mod/forte/comp: 1.052 / 1.085 / 0.967
-rv_rank_252/ivrank proxy: 0.30
+rv_rank_252/ivrank proxy: 0.28
 Target: 0.00
 
 ==========================================================================================
@@ -679,16 +679,16 @@ Gates: CALL=0 | PUT=0 | Nível=B | VolExec=0 | DirClasse=exec_baixa | VolClasse=
 Resultados para YDUQ3:
 Ordem: Neutro
 Nível live: B
-Motivo executor: volatility_gate_bloqueado:expansao_moderada_sem_exec_forte
+Motivo executor: razao_sinal_baixa
 Número de operações históricas: 42
 Taxa de acertos: 52.4%
 GMDP: -0.18
 Esperança ganho DP: -0.03
-Direção live: 0.107773
-Razão sinal live: 0.86
-Vol previsão ratio live: 0.950 (-5.0%)
+Direção live: 0.072703
+Razão sinal live: 0.60
+Vol previsão ratio live: 0.966 (-3.4%)
 Vol thresholds mod/forte/comp: 1.030 / 1.099 / 0.970
-rv_rank_252/ivrank proxy: 0.86
+rv_rank_252/ivrank proxy: 0.81
 Target: 0.00
 
 ==========================================================================================
@@ -702,11 +702,11 @@ Número de operações históricas: 65
 Taxa de acertos: 78.5%
 GMDP: -0.18
 Esperança ganho DP: 0.09
-Direção live: 0.007115
-Razão sinal live: 0.17
-Vol previsão ratio live: 0.875 (-12.5%)
+Direção live: 0.015917
+Razão sinal live: 0.39
+Vol previsão ratio live: 0.864 (-13.6%)
 Vol thresholds mod/forte/comp: 1.030 / 1.139 / 0.970
-rv_rank_252/ivrank proxy: 0.39
+rv_rank_252/ivrank proxy: 0.37
 Target: 0.00
 
 ==========================================================================================
@@ -720,11 +720,11 @@ Número de operações históricas: 74
 Taxa de acertos: 36.5%
 GMDP: 0.23
 Esperança ganho DP: 0.09
-Direção live: 0.058780
-Razão sinal live: 0.84
-Vol previsão ratio live: 0.964 (-3.6%)
+Direção live: 0.059740
+Razão sinal live: 0.89
+Vol previsão ratio live: 0.963 (-3.7%)
 Vol thresholds mod/forte/comp: 1.189 / 1.189 / 0.970
-rv_rank_252/ivrank proxy: 0.45
+rv_rank_252/ivrank proxy: 0.42
 Target: 0.00
 
 ==========================================================================================
@@ -734,16 +734,16 @@ Gates: CALL=0 | PUT=0 | Nível=B | VolExec=0 | DirClasse=exec_bilateral | VolCla
 Resultados para MOTV3:
 Ordem: Neutro
 Nível live: B
-Motivo executor: razao_sinal_baixa
+Motivo executor: razao_sinal_marginal_sem_condicoes
 Número de operações históricas: 3
 Taxa de acertos: 0.0%
 GMDP: -0.18
 Esperança ganho DP: -0.18
-Direção live: 0.027315
-Razão sinal live: 0.42
-Vol previsão ratio live: 0.742 (-25.8%)
+Direção live: 0.049674
+Razão sinal live: 0.79
+Vol previsão ratio live: 0.771 (-22.9%)
 Vol thresholds mod/forte/comp: 1.308 / 1.308 / 0.939
-rv_rank_252/ivrank proxy: 0.82
+rv_rank_252/ivrank proxy: 0.75
 Target: 0.00
 
 ==========================================================================================
@@ -752,16 +752,16 @@ Gates: CALL=0 | PUT=0 | Nível=B | VolExec=0 | DirClasse=exec_bilateral | VolCla
 Resultados para PSSA3:
 Ordem: Neutro
 Nível live: B
-Motivo executor: razao_sinal_marginal_sem_condicoes
+Motivo executor: razao_sinal_baixa
 Número de operações históricas: 173
 Taxa de acertos: 49.7%
 GMDP: 0.05
 Esperança ganho DP: 0.10
-Direção live: -0.035263
-Razão sinal live: 0.71
-Vol previsão ratio live: 1.040 (+4.0%)
+Direção live: -0.016119
+Razão sinal live: 0.34
+Vol previsão ratio live: 1.051 (+5.1%)
 Vol thresholds mod/forte/comp: 1.076 / 1.197 / 0.950
-rv_rank_252/ivrank proxy: 0.55
+rv_rank_252/ivrank proxy: 0.51
 Target: 0.00
 
 ==========================================================================================
@@ -772,15 +772,15 @@ Resultados para BHIA3:
 Ordem: Neutro
 Nível live: B
 Motivo executor: volatility_gate_bloqueado:instabilidade_regressao
-Número de operações históricas: 77
-Taxa de acertos: 84.4%
-GMDP: 0.84
-Esperança ganho DP: 0.78
-Direção live: -0.386660
-Razão sinal live: 1.69
-Vol previsão ratio live: 0.899 (-10.1%)
+Número de operações históricas: 78
+Taxa de acertos: 84.6%
+GMDP: 0.87
+Esperança ganho DP: 0.81
+Direção live: -0.421461
+Razão sinal live: 1.91
+Vol previsão ratio live: 0.954 (-4.6%)
 Vol thresholds mod/forte/comp: 1.039 / 1.080 / 0.812
-rv_rank_252/ivrank proxy: 0.76
+rv_rank_252/ivrank proxy: 0.73
 Target: 0.00
 
 ==========================================================================================
@@ -789,35 +789,35 @@ Gates: CALL=1 | PUT=1 | Nível=A | VolExec=1 | DirClasse=exec_bilateral | VolCla
 Resultados para FLRY3:
 Ordem: Neutro
 Nível live: A
-Motivo executor: razao_sinal_marginal_sem_condicoes
+Motivo executor: vol_live_sem_expansao
 Número de operações históricas: 35
 Taxa de acertos: 48.6%
 GMDP: 0.34
 Esperança ganho DP: 0.11
-Direção live: 0.040759
-Razão sinal live: 0.71
-Vol previsão ratio live: 0.944 (-5.6%)
+Direção live: 0.046931
+Razão sinal live: 0.85
+Vol previsão ratio live: 0.954 (-4.6%)
 Vol thresholds mod/forte/comp: 1.193 / 1.206 / 0.879
-rv_rank_252/ivrank proxy: 0.55
+rv_rank_252/ivrank proxy: 0.51
 Target: 0.00
 
 ==========================================================================================
 PROCESSANDO SBFG3
 Gates: CALL=0 | PUT=0 | Nível=B | VolExec=0 | DirClasse=exec_baixa | VolClasse=expansion_moderada
 Resultados para SBFG3:
-Ordem: Neutro
+Ordem: Alerta PUT
 Nível live: B
-Motivo executor: volatility_gate_bloqueado:expansao_moderada_sem_exec_forte
+Motivo executor: alerta_executor_nivel_B
 Número de operações históricas: 40
 Taxa de acertos: 52.5%
 GMDP: 0.15
 Esperança ganho DP: 0.09
-Direção live: -0.076545
-Razão sinal live: 1.08
-Vol previsão ratio live: 1.263 (+26.3%)
+Direção live: -0.065707
+Razão sinal live: 0.95
+Vol previsão ratio live: 1.321 (+32.1%)
 Vol thresholds mod/forte/comp: 1.266 / 1.266 / 0.934
-rv_rank_252/ivrank proxy: 0.32
-Target: 0.00
+rv_rank_252/ivrank proxy: 0.30
+Target: 7.83
 
 ==========================================================================================
 PROCESSANDO ECOR3
@@ -830,11 +830,11 @@ Número de operações históricas: 47
 Taxa de acertos: 61.7%
 GMDP: 1.34
 Esperança ganho DP: 1.15
-Direção live: 0.019953
-Razão sinal live: 0.21
-Vol previsão ratio live: 0.716 (-28.4%)
+Direção live: 0.041606
+Razão sinal live: 0.45
+Vol previsão ratio live: 0.715 (-28.5%)
 Vol thresholds mod/forte/comp: 1.038 / 1.097 / 0.894
-rv_rank_252/ivrank proxy: 0.78
+rv_rank_252/ivrank proxy: 0.73
 Target: 0.00
 
 ==========================================================================================
@@ -843,16 +843,16 @@ Gates: CALL=0 | PUT=0 | Nível=B | VolExec=0 | DirClasse=exec_bilateral | VolCla
 Resultados para VIVT3:
 Ordem: Neutro
 Nível live: B
-Motivo executor: volatility_gate_bloqueado:expansao_moderada_sem_exec_forte
+Motivo executor: razao_sinal_baixa
 Número de operações históricas: 44
 Taxa de acertos: 45.5%
 GMDP: -0.14
 Esperança ganho DP: -0.13
-Direção live: -0.041721
-Razão sinal live: 0.99
-Vol previsão ratio live: 1.074 (+7.4%)
+Direção live: -0.024223
+Razão sinal live: 0.60
+Vol previsão ratio live: 1.119 (+11.9%)
 Vol thresholds mod/forte/comp: 1.118 / 1.118 / 0.965
-rv_rank_252/ivrank proxy: 0.43
+rv_rank_252/ivrank proxy: 0.39
 Target: 0.00
 
 ==========================================================================================
@@ -861,23 +861,23 @@ Gates: CALL=0 | PUT=0 | Nível=B | VolExec=0 | DirClasse=exec_baixa | VolClasse=
 Resultados para ALPA4:
 Ordem: Neutro
 Nível live: B
-Motivo executor: razao_sinal_marginal_sem_condicoes
+Motivo executor: volatility_gate_bloqueado:expansao_moderada_sem_exec_forte
 Número de operações históricas: 4
 Taxa de acertos: 0.0%
 GMDP: -0.18
 Esperança ganho DP: -0.18
-Direção live: 0.054645
-Razão sinal live: 0.65
-Vol previsão ratio live: 1.006 (+0.6%)
+Direção live: 0.070258
+Razão sinal live: 0.86
+Vol previsão ratio live: 1.002 (+0.2%)
 Vol thresholds mod/forte/comp: 1.035 / 1.155 / 0.955
-rv_rank_252/ivrank proxy: 0.69
+rv_rank_252/ivrank proxy: 0.66
 Target: 0.00
 
 ==========================================================================================
-Excel salvo: /home/runner/work/mia_telegram/mia_telegram/saidas/ordens_dia/ordem_dia_2026_08_25_executor_v5_5.xlsx
+Excel salvo: /home/runner/work/mia_telegram/mia_telegram/saidas/ordens_dia/ordem_dia_2026_08_27_executor_v5_5.xlsx
 Linhas na aba ordem pós-filtro: 6
 Compras de opção live: 0
 Alertas operacionais live: 4
 Tickers processados: 45
 Abas: ordem, todos, gates_direction_vol, diagnostico, funil_diagnostico, resumo, estrategias_opcoes, avisos_saida
-Avisos saída: REALIZAR=3 | ENCERRAR=0 | NO LUCRO=0 | INVERTIDO=2 | FRACO_REV=1 | FRACO_SEG=0 | MANTER=4 | AGUARDAR=0
+Avisos saída: REALIZAR=3 | ENCERRAR=0 | NO LUCRO=0 | INVERTIDO=1 | FRACO_REV=3 | FRACO_SEG=1 | MANTER=3 | AGUARDAR=0
