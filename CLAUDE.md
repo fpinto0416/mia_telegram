@@ -48,6 +48,18 @@ do GitHub Actions, não bug de código. Se os números do card "MIA"
 parecerem defasados ou o Telegram não chegar, checar `gh run list` por um
 dia útil inteiro ausente antes de investigar código.
 
+**Sequência (27/08): a rodada de 26/08 acabou disparando sozinha, ~3h30
+atrasada — e essa colidiu com o backfill manual.** `mia_diario.yml`
+finalmente rodou via `on: schedule` (não manual) em 27/08 ~00:59 UTC,
+calculou os sinais normal (executor.py, 6min), mas o `git push` final
+falhou com `! [rejected] ... (fetch first)` porque o backfill manual das
+21:30 BRT já tinha avançado `main` — a rodada inteira (119 arquivos) se
+perdeu, mesma classe de bug já visto no `acoes_fundamentalista`. **Sem
+perda real de sinal** (o backfill já tinha os dados corretos do dia), mas
+o workflow ficou exposto a esse risco toda vez que dispara atrasado.
+Corrigido: `git fetch origin main && git rebase origin/main` antes do
+`git push` em `mia_diario.yml` — mesmo padrão do `acoes_fundamentalista`.
+
 ## `omqs_boxplot/` aqui é cópia obsoleta — não usar
 
 Existe uma pasta `omqs_boxplot/` neste repo (script gerador do box plot do
