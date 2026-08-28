@@ -94,6 +94,20 @@ que também agrega hilo, api_OMQS (diário + 4h), opcoes-sinal-diario e
 api_OMQS_futuros. É HTML estático — os números são colados à mão a cada
 atualização, seguindo o comentário HTML antes do card.
 
+## Roda em runner próprio (não GitHub-hosted) desde 28/08
+
+`mia_diario.yml` usa `runs-on: [self-hosted, self-hosted-mia_telegram]` —
+migrado depois de 2 dias seguidos (27-28/08) de atraso grave na fila
+compartilhada do GitHub Actions (afetou vários repos do usuário, ver
+`omqs_futuros_5tf/CLAUDE.md` pro relato completo do incidente que motivou
+a migração). Roda numa VPS dedicada (DigitalOcean, mesma máquina de
+`api_OMQS`, `api_OMQS_futuros`, `acoes_fundamentalista` e
+`opcoes-sinal-diario` — cada um com seu próprio diretório/serviço/label).
+Secrets continuam nos GitHub Secrets deste repo, normal. Se o runner
+sumir do ar, ver a seção de troubleshooting no `CLAUDE.md` do
+`omqs_futuros_5tf` (mesmo procedimento pra qualquer um dos runners dessa
+VPS).
+
 ## Estrutura
 
 Ver `README.md`, seção "Arquivos", pra lista completa.
