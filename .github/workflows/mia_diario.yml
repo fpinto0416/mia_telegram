@@ -15,7 +15,10 @@ concurrency:
 
 jobs:
   executor:
-    runs-on: ubuntu-latest
+    # Runner proprio (28/08) -- fila compartilhada do GitHub Actions
+    # atrasou rodadas por horas em varios repos nessa semana. VPS
+    # dedicada (mesma maquina do omqs_futuros_5tf), sem fila.
+    runs-on: [self-hosted, self-hosted-mia_telegram]
     timeout-minutes: 60
     steps:
       - name: Checkout
