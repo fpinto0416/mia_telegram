@@ -108,6 +108,15 @@ sumir do ar, ver a seção de troubleshooting no `CLAUDE.md` do
 `omqs_futuros_5tf` (mesmo procedimento pra qualquer um dos runners dessa
 VPS).
 
+**31/08:** `on:schedule` removido de `mia_diario.yml` (disparo nativo do
+GitHub provou ser fonte de risco em outros repos da VPS, não rede de
+segurança — ver `omqs_futuros_5tf/CLAUDE.md`). `workflow_dispatch`
+continua disponível. No mesmo dia, `download_database.py` falhou 3x
+seguidas (step que normalmente leva ~5min travou 11-21min e foi morto/
+SIGKILL) — suspeita de VPS de 1GB apertada no horário de fechamento
+(18:30-19:00 BRT, onde 4-5 jobs se sobrepõem). Sem fix aplicado ainda;
+recomendação em aberto é subir a droplet pra 2GB.
+
 ## Estrutura
 
 Ver `README.md`, seção "Arquivos", pra lista completa.
