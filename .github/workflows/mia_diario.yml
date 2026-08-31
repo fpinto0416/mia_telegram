@@ -1,9 +1,11 @@
 name: MIA - Executor diario
 
 on:
-  schedule:
-    # Horarios em UTC. Brasilia = UTC-3 (sem horario de verao atualmente).
-    - cron: "30 21 * * 1-5"  # 18:30 BRT, seg-sex — apos o fechamento da B3
+  # on:schedule removido em 31/08 -- provou ser fonte de risco, nao
+  # rede de seguranca: hoje disparou ~7h atrasado no opcoes-sinal-diario
+  # (2a mensagem Telegram duplicada) e nao disparou nenhuma vez no hilo
+  # (repo que ainda depende so dele). O cron da VPS (workflow_dispatch
+  # via gh workflow run) e o gatilho real desde 28/08 -- ver CLAUDE.md.
   workflow_dispatch: {}
 
 permissions:
