@@ -111,11 +111,23 @@ VPS).
 **31/08:** `on:schedule` removido de `mia_diario.yml` (disparo nativo do
 GitHub provou ser fonte de risco em outros repos da VPS, não rede de
 segurança — ver `omqs_futuros_5tf/CLAUDE.md`). `workflow_dispatch`
-continua disponível. No mesmo dia, `download_database.py` falhou 3x
-seguidas (step que normalmente leva ~5min travou 11-21min e foi morto/
-SIGKILL) — suspeita de VPS de 1GB apertada no horário de fechamento
-(18:30-19:00 BRT, onde 4-5 jobs se sobrepõem). Sem fix aplicado ainda;
-recomendação em aberto é subir a droplet pra 2GB.
+continua disponível. Como o gatilho real agora é só o cron da VPS, o
+horário não vive mais no yml — fica só em `/etc/cron.d/gh-triggers` na
+VPS (ver nota abaixo pra horário atual). No mesmo dia,
+`download_database.py` falhou 3x seguidas (step que normalmente leva
+~5min travou 11-21min e foi morto/SIGKILL) — suspeita de VPS de 1GB
+apertada no horário de fechamento (18:30-19:00 BRT, onde vários jobs se
+sobrepunham).
+
+**01/09: movido de 18:30 pra 19:20 BRT, pedido do usuário.** Antes
+disparava no MESMO minuto que `api_OMQS` (18:30 BRT) — colisão direta de
+horário, provável contribuinte pro travamento de 31/08. Com
+`acoes_fundamentalista` também saindo desse horário (movido pra 03:00
+BRT), o cluster de fechamento ficou mais enxuto: api_OMQS (18:30) →
+monitor do omqs_futuros_5tf (18:39) → api_OMQS_futuros (18:50) →
+**mia_telegram (19:20, ~30min de folga depois do último)**. Não resolve
+por si só a causa raiz (suspeita de RAM da VPS) mas reduz a chance de
+2 jobs pesados começarem exatamente juntos.
 
 ## Estrutura
 
