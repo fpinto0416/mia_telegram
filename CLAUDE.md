@@ -22,6 +22,42 @@ position-based como Hilo/OMQS) e separa a métrica de cada estágio — um
 `acerto_direcao` ruim não dizia se a culpa era da direção, da vol ou do
 preço da opção, então não dá pra julgar o pipeline só por ele.
 
+## Estágio 3 recalibrado em preço real de B3 (04/09/2026)
+
+O estágio de precificação usava uma escada Black-Scholes **simétrica**
+(strike delta-30 a 0,57 dp dos dois lados, prêmio 0,18), mais um "ajuste
+de convexidade" de `+σ√20` aplicado só na PUT pra compensar o skew.
+Medição contra COTAHIST real (2,5M contratos com delta/IV; delta 15-45,
+15-30 du, 2023-01 a 2026-08, 8 papéis líquidos) mostrou que o prêmio
+estava perto do certo, mas o **strike simétrico não**: a call delta-30
+real fica a 0,794 dp e a put delta-30 a 0,379 dp — gap de skew de 0,415
+dp contra os ~0,079 dp que a convexidade corrigia (≈5x menor).
+
+Agora `executor.py` tem `ESTRUTURAS_OPC_LADO[+1|-1]` (escada empírica por
+lado) e o helper `k_custo_lado(nome, lado)`; a convexidade foi aposentada
+(com strike por lado, mantê-la contaria o skew duas vezes).
+`ESTRUTURAS_OPC` continua existindo apontando pra tabela CALL, só pra
+iterar nomes de estrutura. `realizados.py` usa a mesma escada
+(`_payoff_estrutura(M, nome, lado)`).
+
+**Efeito**: o modelo antigo superestimava a perna CALL. Nos 294 sinais
+fechados limpos, payoff médio da carteira caiu de +0,065 pra +0,037 e o
+PF de 1,47 pra 1,23 — o edge medido antes estava ~2x otimista. Isso muda
+`esperanca_opcao_dp`, que alimenta o **gate** — ou seja, muda quais sinais
+saem no Telegram, não só o relatório.
+
+**Ao mexer aqui:** a calibração vem dos 8 papéis com opção líquida
+(BOVA11, PETR4, PETR3, VALE3, ITUB4, BBAS3, BBDC4, SMAL11); o executor
+sinaliza ~36, a maioria com skew e spread piores — os números são o melhor
+caso. Recalibrar exige o `vol_implicita.db`, que **não mora neste repo**
+(fica em `/app/volatilidade_implicita`, não versionado); a mesma máquina
+de parsing existe no repo público `opcoes-sinal-diario`
+(`src/cotahist.py`, `src/black76.py`, `src/forward.py`).
+
+Diagnóstico completo (perna CALL negativa em 8 das 9 semanas, benchmark
+correto do realizado, por que mudar delta ou usar spread não resolve) está
+no CLAUDE.md do repo principal privado.
+
 ## Automação — 2 workflows
 
 - `.github/workflows/mia_diario.yml` — 09:00 e 18:30 BRT (seg-sex):

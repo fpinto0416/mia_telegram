@@ -48,7 +48,10 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent))
-from executor import _importar_database_local, ESTRUTURAS_OPC, FATOR_CUSTO_2_PERNAS, CARRY_20
+from executor import (
+    _importar_database_local, ESTRUTURAS_OPC, FATOR_CUSTO_2_PERNAS, CARRY_20,
+    k_custo_lado,
+)
 
 PASTA  = Path(__file__).parent
 HOJE   = date.today()
@@ -111,12 +114,13 @@ def _precos(ticker: str) -> pd.DataFrame:
 
 # ── Payoff de estrutura sobre M escalar ──────────────────────────────────────
 
-def _payoff_estrutura(M: float, nome: str) -> float:
-    e = ESTRUTURAS_OPC[nome]
-    custo_ef = e["custo"] * (FATOR_CUSTO_2_PERNAS if e["k_short"] is not None else 1.0)
-    pay = max(M - e["k_long"], 0.0)
-    if e["k_short"] is not None:
-        pay -= max(M - e["k_short"], 0.0)
+def _payoff_estrutura(M: float, nome: str, lado: int = 1) -> float:
+    """Payoff terminal da estrutura em DP, na escada de strikes real do `lado`
+    (+1 CALL / -1 PUT). Default +1 preserva a assinatura antiga."""
+    k_long, k_short, custo_ef = k_custo_lado(nome, lado)
+    pay = max(M - k_long, 0.0)
+    if k_short is not None:
+        pay -= max(M - k_short, 0.0)
     return round(pay - custo_ef, 4)
 
 
@@ -200,11 +204,13 @@ def _processar_sinal(row: pd.Series, data_sinal: date) -> dict | None:
         # verdade. Não é "vol dos últimos 20 pregões", é o mesmo tipo de
         # métrica (EWMA(22) de retornos diários) só que avaliada mais tarde.
         vol_t20 = float(ret_d.ewm(span=22, adjust=False).std().iloc[pos_t20])
-        # Ajuste de carry: mesmo critério do executor (forward adjustment por CARRY_20)
+        # Ajuste de carry: mesmo critério do executor (forward adjustment por CARRY_20).
+        # O ajuste de convexidade (+σ√20 na PUT) foi aposentado em 04/09/2026 junto
+        # com o strike simétrico -- o skew real de B3 agora entra pela escada de
+        # strikes por lado (ESTRUTURAS_OPC_LADO no executor).
         _carry_dp_real     = CARRY_20 / (vol_t * SQRT_H)
-        _convexity_dp_real = vol_t * SQRT_H if lado < 0 else 0.0
-        M_real    = round(lado * ret_real / (vol_t * SQRT_H) - lado * _carry_dp_real + _convexity_dp_real, 4)
-        payoffs   = {f"payoff_{n}": _payoff_estrutura(M_real, n) for n in ESTRUTURAS_OPC}
+        M_real    = round(lado * ret_real / (vol_t * SQRT_H) - lado * _carry_dp_real, 4)
+        payoffs   = {f"payoff_{n}": _payoff_estrutura(M_real, n, lado) for n in ESTRUTURAS_OPC}
         # C3: lucro por estrutura derivado do próprio payoff (break-even correto por estrutura)
         lucros    = {f"lucro_{n}": int(payoffs[f"payoff_{n}"] > 0) for n in ESTRUTURAS_OPC}
         acerto_direcao = int(M_real > 0)

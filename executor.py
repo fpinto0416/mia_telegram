@@ -133,20 +133,93 @@ SQRT_H = np.sqrt(PERIODO_ALVO)
 # Strike proxy delta 30 usado como referência operacional.
 DELTA30_SIGMA_MULT = 0.52
 
-# Payoff delta-30 em unidades de σ√20 (Black-Scholes, quase insensível ao nível de vol).
-STRIKE_DELTA30_DP    = 0.57   # distância strike call/put delta-30
-PREMIO_DELTA30_DP    = 0.18   # prêmio BS delta-30, 20 pregões
-BREAKEVEN_DELTA30_DP = STRIKE_DELTA30_DP + PREMIO_DELTA30_DP  # 0.75
+# ─────────────────────────────────────────────────────────────────────────────
+# Payoff de opção em unidades de σ√20 — CALIBRADO EM PREÇO REAL DE B3 (04/09/2026)
+#
+# Até 04/09/2026 usava-se uma escada Black-Scholes SIMÉTRICA (delta-30 a 0.57 dp
+# dos dois lados, prêmio 0.18) mais um "ajuste de convexidade" de +σ√20 aplicado
+# só na PUT para compensar o skew. Medição contra COTAHIST real
+# (/app/volatilidade_implicita/vol_implicita.db, 2.5M contratos com delta/IV;
+# delta 15-45, 15-30 du, 2023-01 a 2026-08, 8 papéis líquidos) mostrou que:
+#   - o prêmio simétrico estava perto do real (0.181 vs 0.194 call / 0.226 put);
+#   - o STRIKE simétrico não estava: a call delta-30 real fica a 0.794 dp e a
+#     put delta-30 real a 0.379 dp — gap de skew de 0.415 dp, contra os ~0.079 dp
+#     que o ajuste de convexidade corrigia (≈5x menor que o necessário);
+#   - consequência: o modelo superestimava a perna CALL e subestimava a PUT.
+# A escada abaixo é a mediana empírica por delta e por lado; o ajuste de
+# convexidade foi aposentado (o skew agora entra pelo strike, não por um termo
+# somado em M).
+#
+# RESSALVA: calibrado nos 8 papéis com opção líquida (BOVA11, PETR4, PETR3,
+# VALE3, ITUB4, BBAS3, BBDC4, SMAL11). O executor sinaliza ~36 tickers, a maioria
+# com skew e spread piores — estes números são o melhor caso.
+#
+# Escada real (mediana, dp do horizonte):
+#   delta | CALL k_dp  prêmio | PUT k_dp  prêmio
+#    0.15 |    1.427   0.082  |   1.035   0.099
+#    0.20 |    1.170   0.116  |   0.773   0.139
+#    0.25 |    0.969   0.154  |   0.562   0.181
+#    0.30 |    0.794   0.194  |   0.379   0.226
+#    0.35 |    0.637   0.241  |   0.218   0.276
+#    0.45 |    0.346   0.351  |   0.067   0.389
+# ─────────────────────────────────────────────────────────────────────────────
 
-# Estruturas candidatas — strikes e prêmios em DP do horizonte (BS, delta clássico, 20 pregões).
-# k_long = strike comprado; k_short = strike vendido (None = naked); custo = prêmio líquido.
-ESTRUTURAS_OPC = {
-    "naked_30":     dict(k_long=0.57, k_short=None, custo=0.181),
-    "naked_45":     dict(k_long=0.17, k_short=None, custo=0.320),
-    "spread_35_20": dict(k_long=0.43, k_short=0.89, custo=0.117),
-    "spread_45_25": dict(k_long=0.17, k_short=0.72, custo=0.178),
-    "spread_45_15": dict(k_long=0.17, k_short=1.04, custo=0.232),
+# Estruturas candidatas por lado — k_long = strike comprado; k_short = strike
+# vendido (None = naked); custo = prêmio líquido. Chaves iguais nos dois lados.
+ESTRUTURAS_OPC_LADO = {
+    1: {  # CALL
+        "naked_30":     dict(k_long=0.794, k_short=None,  custo=0.194),
+        "naked_45":     dict(k_long=0.346, k_short=None,  custo=0.351),
+        "spread_35_20": dict(k_long=0.637, k_short=1.170, custo=0.125),
+        "spread_45_25": dict(k_long=0.346, k_short=0.969, custo=0.197),
+        "spread_45_15": dict(k_long=0.346, k_short=1.427, custo=0.269),
+    },
+    -1: {  # PUT
+        "naked_30":     dict(k_long=0.379, k_short=None,  custo=0.226),
+        "naked_45":     dict(k_long=0.067, k_short=None,  custo=0.389),
+        "spread_35_20": dict(k_long=0.218, k_short=0.773, custo=0.137),
+        "spread_45_25": dict(k_long=0.067, k_short=0.562, custo=0.208),
+        "spread_45_15": dict(k_long=0.067, k_short=1.035, custo=0.290),
+    },
 }
+# Compat: quem importa ESTRUTURAS_OPC sem lado recebe a tabela CALL. Só serve
+# para iterar nomes de estrutura — para cálculo de payoff use k_custo_lado().
+ESTRUTURAS_OPC = ESTRUTURAS_OPC_LADO[1]
+
+# Delta-30 por lado (usado nas métricas históricas do executor).
+STRIKE_DELTA30_DP_LADO = {s: ESTRUTURAS_OPC_LADO[s]["naked_30"]["k_long"] for s in (1, -1)}
+PREMIO_DELTA30_DP_LADO = {s: ESTRUTURAS_OPC_LADO[s]["naked_30"]["custo"]  for s in (1, -1)}
+BREAKEVEN_DELTA30_DP_LADO = {s: STRIKE_DELTA30_DP_LADO[s] + PREMIO_DELTA30_DP_LADO[s] for s in (1, -1)}
+# Compat de leitura (valores CALL); código novo deve usar as versões _LADO.
+STRIKE_DELTA30_DP    = STRIKE_DELTA30_DP_LADO[1]
+PREMIO_DELTA30_DP    = PREMIO_DELTA30_DP_LADO[1]
+BREAKEVEN_DELTA30_DP = BREAKEVEN_DELTA30_DP_LADO[1]
+
+
+def k_custo_lado(nome: str, lado, com_fator_2_pernas: bool = True):
+    """
+    Strikes e custo da estrutura `nome` alinhados ao lado de cada sinal.
+
+    `lado` pode ser escalar (+1 CALL / -1 PUT) ou array/Series de ±1 — neste caso
+    os retornos vêm como arrays alinhados, para payoff vetorizado sobre uma série
+    que mistura sinais de compra e de venda.
+
+    Retorna (k_long, k_short, custo_efetivo). k_short é None em estruturas naked.
+    """
+    naked = ESTRUTURAS_OPC_LADO[1][nome]["k_short"] is None
+    fator = 1.0 if (naked or not com_fator_2_pernas) else FATOR_CUSTO_2_PERNAS
+
+    if np.isscalar(lado):
+        e = ESTRUTURAS_OPC_LADO[1 if lado >= 0 else -1][nome]
+        return e["k_long"], e["k_short"], e["custo"] * fator
+
+    s = np.asarray(lado)
+    call, put = ESTRUTURAS_OPC_LADO[1][nome], ESTRUTURAS_OPC_LADO[-1][nome]
+    eh_call = s >= 0
+    k_long = np.where(eh_call, call["k_long"], put["k_long"])
+    custo  = np.where(eh_call, call["custo"],  put["custo"]) * fator
+    k_short = None if naked else np.where(eh_call, call["k_short"], put["k_short"])
+    return k_long, k_short, custo
 FATOR_CUSTO_2_PERNAS = 1.10   # spreads pagam 2 bid-asks; penalidade de execução
 ROI_MARGEM_TROCA     = 1.20   # só troca da default se ROI da vencedora superar naked_30 em 20%
 
@@ -1189,10 +1262,15 @@ def avaliar_estruturas_opc(
     vol_model_tipo: str = "ML",
     rv_rank: float = 0.5,
     vol_forte: int = 0,
+    lado: "int | np.ndarray | pd.Series" = 1,
 ) -> "tuple[str, dict, str, str]":
     """
     Avalia payoff terminal das 4 estruturas sobre M_ops (DP).
     Retorna (estrutura_otima, detalhes, estruturas_permitidas_str, estrutura_vetada_por).
+
+    `lado` (+1 CALL / -1 PUT, escalar ou alinhado a M_ops) seleciona a escada de
+    strikes real do lado correspondente — o skew de B3 põe a call delta-30 a
+    0.794 dp e a put delta-30 a 0.379 dp. Default +1 preserva a chamada antiga.
 
     Duas camadas:
       1. Elegibilidade por risco (_estruturas_permitidas) — veta naked em contextos frágeis.
@@ -1201,16 +1279,17 @@ def avaliar_estruturas_opc(
     """
     detalhes = {}
     n = len(M_ops)
-    for nome, e in ESTRUTURAS_OPC.items():
-        custo_ef = e["custo"] * (FATOR_CUSTO_2_PERNAS if e["k_short"] is not None else 1.0)
-        pay = np.maximum(M_ops - e["k_long"], 0.0)
-        if e["k_short"] is not None:
-            pay = pay - np.maximum(M_ops - e["k_short"], 0.0)
+    for nome in ESTRUTURAS_OPC:
+        k_long, k_short, custo_ef = k_custo_lado(nome, lado)
+        pay = np.maximum(M_ops - k_long, 0.0)
+        if k_short is not None:
+            pay = pay - np.maximum(M_ops - k_short, 0.0)
         pay = pay - custo_ef
-        E  = float(pay.mean()) if n > 0 else -custo_ef
+        custo_med = float(np.mean(custo_ef))
+        E  = float(pay.mean()) if n > 0 else -custo_med
         SE = float(pay.std() / np.sqrt(n)) if n > 1 else float("inf")
         detalhes[nome] = dict(E=round(E, 4), SE=round(SE, 4),
-                              roi=round(E / custo_ef, 4), custo_ef=round(custo_ef, 4))
+                              roi=round(E / custo_med, 4), custo_ef=round(custo_med, 4))
 
     permitidas  = _estruturas_permitidas(vol_model_tipo, rv_rank)
     perm_str    = ",".join(sorted(permitidas))
@@ -1626,11 +1705,14 @@ if __name__ == "__main__":
             # Equivalente: M_adj = M - side × carry_dp, onde side = sign(pred) e carry_dp = CARRY_20 / (vol × √20)
             _carry_dp     = CARRY_20 / (vol_ops[ops_mask] * SQRT_H)
             _side         = np.sign(pred_metrica)[ops_mask]
-            # Convexidade lognormal: sob BS, k_put = k_call - σ√T para o mesmo delta absoluto.
-            # k_long está calibrado para CALL; PUTs precisam de σ√T extra em M para usar o mesmo k.
-            _convexity_dp = vol_ops[ops_mask] * SQRT_H
-            M_ops = M_ops_bruto - _side * _carry_dp + np.where(_side < 0, _convexity_dp, 0.0)
-            lucro_ops = np.maximum(M_ops - STRIKE_DELTA30_DP, 0) - PREMIO_DELTA30_DP
+            # O ajuste de convexidade (+σ√20 na PUT) foi aposentado em 04/09/2026:
+            # existia para compensar strike simétrico, e o skew real de B3 agora
+            # entra pelo strike por lado (ver ESTRUTURAS_OPC_LADO). Mantê-lo seria
+            # contar o mesmo efeito duas vezes.
+            M_ops = M_ops_bruto - _side * _carry_dp
+            _k30, _, _premio30 = k_custo_lado("naked_30", _side)
+            _be30 = _k30 + _premio30
+            lucro_ops = np.maximum(M_ops - _k30, 0) - _premio30
             # gmdp: payoff de opção condicional a acerto direcional no Close (M_ops > 0).
             mediana_ganho_em_dp = float(lucro_ops[M_ops > 0].median()) if (M_ops > 0).any() else -PREMIO_DELTA30_DP
             mediana_perda_em_dp = M_ops[M_ops < 0].median() if (M_ops < 0).any() else 0
@@ -1638,8 +1720,9 @@ if __name__ == "__main__":
             mediana_ganho = resultados_operacoes[resultados_operacoes > 0].median() if (resultados_operacoes > 0).any() else 0
 
             taxa_acertos = acertos / numero_operacoes if numero_operacoes > 0 else 0
-            tax_acerto_opc      = float((M_ops > BREAKEVEN_DELTA30_DP).mean()) if ops_mask.any() else 0.0
-            ganho_medio_liq_opc = float((M_ops[M_ops > BREAKEVEN_DELTA30_DP] - BREAKEVEN_DELTA30_DP).mean()) if (M_ops > BREAKEVEN_DELTA30_DP).any() else 0.0
+            _acima_be           = M_ops > _be30
+            tax_acerto_opc      = float(_acima_be.mean()) if ops_mask.any() else 0.0
+            ganho_medio_liq_opc = float((M_ops - _be30)[_acima_be].mean()) if _acima_be.any() else 0.0
             esperanca_opc       = float(lucro_ops.mean()) if ops_mask.any() else -PREMIO_DELTA30_DP
             # S-C: erro padrão da esperança — exposição ao ruído amostral.
             se_esperanca_opc    = float(lucro_ops.std() / np.sqrt(len(lucro_ops))) if len(lucro_ops) > 1 else np.inf
@@ -1654,7 +1737,8 @@ if __name__ == "__main__":
             alvo_dir = df_model["Alvo"].reindex(pred_dir_only.index)
             vol_dir  = df_model["vol_ewma_22"].reindex(pred_dir_only.index)
             res_dir_dp     = (pred_dir_only * alvo_dir) / (vol_dir * SQRT_H)
-            lucro_dir_dp   = np.maximum(res_dir_dp - STRIKE_DELTA30_DP, 0) - PREMIO_DELTA30_DP
+            _k_dir, _, _prem_dir = k_custo_lado("naked_30", pred_dir_only)
+            lucro_dir_dp   = np.maximum(res_dir_dp - _k_dir, 0) - _prem_dir
             gmdp_direction = float(lucro_dir_dp[res_dir_dp > 0].median()) if (res_dir_dp > 0).any() else -PREMIO_DELTA30_DP
             numero_operacoes_direction = int((pred_dir_only * alvo_dir).notna().sum())
 
@@ -1666,7 +1750,8 @@ if __name__ == "__main__":
             alvo_dir_iv   = df_model["Alvo"].reindex(pred_dir_iv.index)
             vol_dir_iv    = df_model["vol_ewma_22"].reindex(pred_dir_iv.index)
             res_dir_iv_dp   = (pred_dir_iv * alvo_dir_iv) / (vol_dir_iv * SQRT_H)
-            lucro_iv_dp     = np.maximum(res_dir_iv_dp - STRIKE_DELTA30_DP, 0) - PREMIO_DELTA30_DP
+            _k_iv, _, _prem_iv = k_custo_lado("naked_30", pred_dir_iv)
+            lucro_iv_dp     = np.maximum(res_dir_iv_dp - _k_iv, 0) - _prem_iv
             gmdp_ivrank_baixo = float(lucro_iv_dp[res_dir_iv_dp > 0].median()) if (res_dir_iv_dp > 0).any() else -PREMIO_DELTA30_DP
             numero_operacoes_ivrank = int((pred_dir_iv * alvo_dir_iv).notna().sum())
 
@@ -1753,7 +1838,7 @@ if __name__ == "__main__":
             _vol_forte_estr = int(last.get("vol_expanding_forte_live", 0))
             if ops_mask.any():
                 estrutura_otima, estr_det, estr_perm_str, estr_vetada_por = avaliar_estruturas_opc(
-                    M_ops, _vol_tipo_estr, _rv_rank_estr, _vol_forte_estr
+                    M_ops, _vol_tipo_estr, _rv_rank_estr, _vol_forte_estr, lado=_side
                 )
             else:
                 estrutura_otima, estr_det, estr_perm_str, estr_vetada_por = "nenhuma", {}, "", "esperanca"
@@ -2028,17 +2113,16 @@ if __name__ == "__main__":
             dias_decorridos = max(dias_decorridos, 0)
             T_restante      = max(PERIODO_ALVO - dias_decorridos, 1)
 
-            # M desde a entrada (com carry e convexidade — mesmo critério do backtest)
+            # M desde a entrada (com carry — mesmo critério do backtest).
+            # Convexidade aposentada em 04/09/2026: o skew entra pelo strike do lado.
             ret_atual       = (close_atual - close_entrada) / close_entrada
             M_bruto         = lado * ret_atual / (vol_atual * SQRT_H)
             carry_dp        = CARRY_20 / (vol_atual * SQRT_H)
-            convexity_dp    = vol_atual * SQRT_H if lado < 0 else 0.0
-            M_adj           = M_bruto - lado * carry_dp + convexity_dp
+            M_adj           = M_bruto - lado * carry_dp
 
-            # Parâmetros da estrutura
+            # Parâmetros da estrutura, na escada do lado da posição
             estr = estrutura if estrutura in ESTRUTURAS_OPC else "naked_30"
-            k_long = ESTRUTURAS_OPC[estr]["k_long"]
-            custo  = ESTRUTURAS_OPC[estr]["custo"] * (FATOR_CUSTO_2_PERNAS if ESTRUTURAS_OPC[estr]["k_short"] is not None else 1.0)
+            k_long, _, custo = k_custo_lado(estr, lado)
             breakeven   = k_long + custo
             lucro_atual = max(M_adj - k_long, 0.0) - custo
 
