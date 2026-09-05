@@ -46,13 +46,57 @@ PF de 1,47 pra 1,23 — o edge medido antes estava ~2x otimista. Isso muda
 `esperanca_opcao_dp`, que alimenta o **gate** — ou seja, muda quais sinais
 saem no Telegram, não só o relatório.
 
-**Ao mexer aqui:** a calibração vem dos 8 papéis com opção líquida
-(BOVA11, PETR4, PETR3, VALE3, ITUB4, BBAS3, BBDC4, SMAL11); o executor
-sinaliza ~36, a maioria com skew e spread piores — os números são o melhor
-caso. Recalibrar exige o `vol_implicita.db`, que **não mora neste repo**
-(fica em `/app/volatilidade_implicita`, não versionado); a mesma máquina
-de parsing existe no repo público `opcoes-sinal-diario`
-(`src/cotahist.py`, `src/black76.py`, `src/forward.py`).
+### Correção de 05/09/2026 — o prêmio estava superestimado
+
+A escada de 04/09 acertou os strikes mas **superestimava o prêmio em 8-21% nos
+12 pontos**. Defeito de método, não de amostra: ela selecionava contratos por
+delta e tirava a mediana de `strike_dp` e a de `premio_dp` separadamente, e duas
+medianas marginais não formam um par que esteja sobre a curva k→prêmio. A versão
+atual seleciona **por k** e mede a mediana do prêmio naquele k, sobre 755 mil
+cotações OTM de 15-30 du em 82 tickers (14-24 mil observações por ponto).
+Restringir aos mesmos 8 papéis líquidos de antes dá o mesmo resultado, e por ano
+também é estável — não era mix de ticker nem regime.
+
+CALL k=0,794: 0,194 → **0,162**. PUT k=0,379: 0,226 → **0,202**.
+
+**Efeito no gate** (A/B no mesmo dia, 45 tickers): esperança mediana +0,0452 →
++0,0764 e o gate passa a aprovar 25 em vez de 21 tickers — entram GOAU4, ISAE4,
+PSSA3 e TOTS3, nenhum sai. 8 tickers mudam de estrutura recomendada. **Sai mais
+sinal no Telegram**, porque o custo estava inflado e o gate rejeitava candidatos
+com base nele.
+
+**Isso é correção de medição, não ganho de edge.** O payoff medido melhora ~80%
+(naked_30 de +0,036 para +0,065 dp), mas o benchmark de moeda — payoff de lado
+aleatório nos mesmos ativos e datas, agora impresso pelo `realizados.py` — subiu
+junto, e a contribuição do sinal direcional segue em +0,0005 dp.
+
+### Pisos de comparação no `realizados.py`
+
+Toda rodada agora imprime dois pisos antes de qualquer número absoluto, e grava
+as colunas que os sustentam (`M_mercado`, `payoff_moeda`, `lado_trivial`,
+`lado_modelo`):
+
+- **moeda** — payoff de lado aleatório nos mesmos ativos e datas;
+- **trivial** — concordância com `sign(close_t − MA20_t)`, regra de uma linha
+  que sozinha acerta ~84% do alvo que o modelo de direção prevê.
+
+Existem porque o sistema vinha sendo lido contra 50% (direção) e contra zero
+(payoff), referências que qualquer coisa bate. Contra os pisos certos, o modelo
+empata. Se um desses blocos voltar a mostrar empate, não há o que operar,
+por melhores que pareçam os números absolutos.
+
+**Ao mexer aqui:** os **strikes** (k) ainda vêm da calibração por delta sobre
+os 8 papéis com opção líquida (BOVA11, PETR4, PETR3, VALE3, ITUB4, BBAS3,
+BBDC4, SMAL11), feita no `vol_implicita.db`, que **não mora neste repo** (fica
+em `/app/volatilidade_implicita`, não versionado). Os **custos** vêm da medição
+de 05/09 sobre 82 tickers, a partir da base Parquet gerada por
+`construir_base_opcoes.py` no repo principal (COTAHIST → `saidas/opcoes/`, fora
+do git por tamanho). A máquina de parsing do COTAHIST é a do repo público
+`opcoes-sinal-diario` (`src/cotahist.py`, `src/black76.py`, `src/forward.py`).
+
+Limite que fica: o COTAHIST só registra série que **negociou** no dia, então não
+dá pra distinguir "não listada" de "listada sem negócio" — toda medição de
+prêmio aqui é condicional a séries que negociaram.
 
 Diagnóstico completo (perna CALL negativa em 8 das 9 semanas, benchmark
 correto do realizado, por que mudar delta ou usar spread não resolve) está

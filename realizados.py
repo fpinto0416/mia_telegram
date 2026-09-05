@@ -124,6 +124,56 @@ def _payoff_estrutura(M: float, nome: str, lado: int = 1) -> float:
     return round(pay - custo_ef, 4)
 
 
+def _payoff_moeda(M_mercado: float) -> float:
+    """Payoff esperado jogando MOEDA no lado, com o mesmo ativo e a mesma data.
+
+    Piso obrigatório de qualquer leitura do sistema. Sem ele, um payoff médio
+    positivo parece edge quando pode ser apenas a composição de lado num
+    mercado que andou -- foi exatamente o que aconteceu até 09/2026, quando o
+    modelo entregou +0,0374 dp contra +0,0376 dp da moeda (contribuição do
+    sinal direcional: -0,0002 dp). `M_mercado` é o movimento do ativo em DP na
+    direção do MERCADO, não na do sinal: M_real * lado.
+    """
+    if not np.isfinite(M_mercado):
+        return np.nan
+    return round((_payoff_estrutura(M_mercado, "naked_30", 1)
+                  + _payoff_estrutura(-M_mercado, "naked_30", -1)) / 2, 4)
+
+
+def _imprimir_pisos(df: pd.DataFrame) -> None:
+    """Os dois pisos contra os quais o MIA tem que ser lido.
+
+    Existem porque, até 09/2026, o sistema era comparado contra 50% (direção) e
+    contra zero (payoff) -- referências que qualquer coisa bate. Contra os pisos
+    certos, o modelo empatou: o sinal direcional contribuiu -0,0002 dp e o
+    preditor trivial acertou MAIS que o modelo no alvo que o direction prevê.
+    Se um destes blocos voltar a mostrar empate, não há o que operar,
+    independentemente de quão bons pareçam os números absolutos.
+    """
+    print("\n--- pisos de comparação (piso batido = a diferença é o edge) ---")
+
+    # Piso 1: moeda. Payoff de lado aleatório nos MESMOS ativos e MESMAS datas.
+    d = df.dropna(subset=["payoff_naked_30", "payoff_moeda"])
+    if len(d) >= 15:
+        mod, moeda = d["payoff_naked_30"].mean(), d["payoff_moeda"].mean()
+        print(f"  moeda   : modelo {mod:+.4f} dp  vs  lado aleatório {moeda:+.4f} dp  "
+              f"->  sinal direcional contribui {mod - moeda:+.4f} dp  (N={len(d)})")
+    else:
+        print(f"  moeda   : amostra insuficiente (N={len(d)} < 15)")
+
+    # Piso 2: preditor trivial. sign(close_t - MA20_t) no alvo que o direction
+    # prevê -- não no preço. Comparar o modelo com 50% infla o resultado, porque
+    # ~84% do alvo MA20 é o desvio preço-MA já conhecido na data do sinal.
+    d = df[(df.get("lado_trivial", 0) != 0) & df["acerto_direcao"].notna()]
+    if len(d) >= 15:
+        conc = (d["lado_trivial"] == d["lado_modelo"]).mean()
+        print(f"  trivial : modelo concorda com sign(close−MA20) em {conc:.1%} dos sinais  (N={len(d)})")
+        print(f"            (o trivial acerta ~84% do alvo MA20 sozinho — o piso da direção "
+              f"é ele, não 50%)")
+    else:
+        print(f"  trivial : amostra insuficiente (N={len(d)} < 15)")
+
+
 def _profit_factor(retornos: pd.Series) -> float:
     """soma dos ganhos / |soma das perdas| -- mesma convenção usada em
     api_OMQS/hilo (>1 = ganhos pesam mais que perdas). NaN é ignorado
@@ -183,6 +233,11 @@ def _processar_sinal(row: pd.Series, data_sinal: date) -> dict | None:
             return None
 
     close_t = float(df_p["Close"].iloc[pos_sinal])
+    # Preditor trivial: o preço está acima ou abaixo da própria MA20? É o piso
+    # da direção -- ele acerta ~84% do alvo MA20 do direction sem modelo nenhum,
+    # então comparar o modelo com 50% inventa skill que não existe.
+    _ma20 = df_p["Close"].rolling(20).mean().iloc[pos_sinal]
+    lado_trivial = int(np.sign(close_t - _ma20)) if pd.notna(_ma20) else 0
     ret_d   = df_p["Close"].pct_change()
     vol_t   = float(ret_d.ewm(span=22, adjust=False).std().iloc[pos_sinal])
     if vol_t == 0 or np.isnan(vol_t):
@@ -214,6 +269,8 @@ def _processar_sinal(row: pd.Series, data_sinal: date) -> dict | None:
         # C3: lucro por estrutura derivado do próprio payoff (break-even correto por estrutura)
         lucros    = {f"lucro_{n}": int(payoffs[f"payoff_{n}"] > 0) for n in ESTRUTURAS_OPC}
         acerto_direcao = int(M_real > 0)
+        M_mercado      = round(M_real * lado, 4)   # movimento do ativo, sem o lado do sinal
+        payoff_moeda   = _payoff_moeda(M_mercado)
         # retorno da AÇÃO pura na direção do sinal (sem estrutura de opção
         # nenhuma por cima) -- só o carry/convexity do M_real são específicos
         # de opção; retorno_acao é literalmente lado * variação de preço.
@@ -224,6 +281,8 @@ def _processar_sinal(row: pd.Series, data_sinal: date) -> dict | None:
     else:
         close_t20      = np.nan
         M_real         = np.nan
+        M_mercado      = np.nan
+        payoff_moeda   = np.nan
         payoffs        = {f"payoff_{n}": np.nan for n in ESTRUTURAS_OPC}
         lucros         = {f"lucro_{n}": np.nan for n in ESTRUTURAS_OPC}
         acerto_direcao = np.nan
@@ -266,6 +325,10 @@ def _processar_sinal(row: pd.Series, data_sinal: date) -> dict | None:
         "pregoes_decorridos":    pregoes_decorridos,
         "status":                status,
         "M_real":                M_real,
+        "M_mercado":             M_mercado,
+        "payoff_moeda":          payoff_moeda,
+        "lado_trivial":          lado_trivial,
+        "lado_modelo":           lado,
         "M_parcial":             M_parcial,
         "acerto_direcao":        acerto_direcao,
         "retorno_acao":          retorno_acao,
@@ -443,6 +506,7 @@ def main():
     print(f"Fechados LIMPOS (pós-fix rel_rsl20 ≥09/06): {len(df_fech_limpo)}")
     print(f"Fechados CONTAMINADOS (pré-09/06, excluídos das médias): {len(df_fech_cont)}")
     if len(df_fech_limpo):
+        _imprimir_pisos(df_fech_limpo)
         print(f"Acerto direção (limpos): {df_fech_limpo['acerto_direcao'].mean():.1%}")
         print(f"Payoff naked_30 médio (limpos): {df_fech_limpo['payoff_naked_30'].mean():.4f}")
         print(f"Lucro naked_30 (payoff>0, limpos): {df_fech_limpo['lucro_naked_30'].mean():.1%}")

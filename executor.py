@@ -154,34 +154,46 @@ DELTA30_SIGMA_MULT = 0.52
 # VALE3, ITUB4, BBAS3, BBDC4, SMAL11). O executor sinaliza ~36 tickers, a maioria
 # com skew e spread piores — estes números são o melhor caso.
 #
-# Escada real (mediana, dp do horizonte):
-#   delta | CALL k_dp  prêmio | PUT k_dp  prêmio
-#    0.15 |    1.427   0.082  |   1.035   0.099
-#    0.20 |    1.170   0.116  |   0.773   0.139
-#    0.25 |    0.969   0.154  |   0.562   0.181
-#    0.30 |    0.794   0.194  |   0.379   0.226
-#    0.35 |    0.637   0.241  |   0.218   0.276
-#    0.45 |    0.346   0.351  |   0.067   0.389
+# RECALIBRAÇÃO DO CUSTO (05/09/2026) — a primeira calibração superestimava o
+# prêmio em 8-21% em TODOS os 12 pontos da escada. O defeito era de método, não
+# de amostra: ela selecionava contratos por delta e reportava a mediana de
+# strike_dp e a mediana de premio_dp SEPARADAMENTE, e duas medianas marginais
+# não formam um par que esteja sobre a curva k→prêmio. A versão atual seleciona
+# POR k e mede a mediana do prêmio naquele k — cada ponto é um ponto da curva.
+# Fonte: saidas/opcoes/*.parquet (82 tickers, 2024-2026, 755 mil cotações OTM de
+# 15-30 du, 14-24 mil observações por ponto). Restringir a nova medição aos
+# mesmos 8 papéis líquidos de antes dá o mesmo resultado, então não era mix de
+# ticker. O efeito por ano é pequeno (CALL k=0.794: 0.166 / 0.154 / 0.166 em
+# 2024/25/26), então não se justifica escada por período.
+# Os k continuam sendo os da calibração por delta; mudou só o custo — por isso
+# os rótulos naked_30/naked_45 descrevem o STRIKE, não o delta exato de hoje.
+#
+# Escada medida (k fixo, mediana do prêmio em dp do horizonte):
+#   CALL  k=0.346 → 0.296 | 0.637 → 0.199 | 0.794 → 0.162 | 0.969 → 0.129
+#         k=1.170 → 0.099 | 1.427 → 0.073
+#   PUT   k=0.067 → 0.306 | 0.218 → 0.254 | 0.379 → 0.202 | 0.562 → 0.156
+#         k=0.773 → 0.115 | 1.035 → 0.081
 # ─────────────────────────────────────────────────────────────────────────────
 
 # Estruturas candidatas por lado — k_long = strike comprado; k_short = strike
 # vendido (None = naked); custo = prêmio líquido. Chaves iguais nos dois lados.
 ESTRUTURAS_OPC_LADO = {
     1: {  # CALL
-        "naked_30":     dict(k_long=0.794, k_short=None,  custo=0.194),
-        "naked_45":     dict(k_long=0.346, k_short=None,  custo=0.351),
-        "spread_35_20": dict(k_long=0.637, k_short=1.170, custo=0.125),
-        "spread_45_25": dict(k_long=0.346, k_short=0.969, custo=0.197),
-        "spread_45_15": dict(k_long=0.346, k_short=1.427, custo=0.269),
+        "naked_30":     dict(k_long=0.794, k_short=None,  custo=0.162),
+        "naked_45":     dict(k_long=0.346, k_short=None,  custo=0.296),
+        "spread_35_20": dict(k_long=0.637, k_short=1.170, custo=0.100),
+        "spread_45_25": dict(k_long=0.346, k_short=0.969, custo=0.167),
+        "spread_45_15": dict(k_long=0.346, k_short=1.427, custo=0.223),
     },
     -1: {  # PUT
-        "naked_30":     dict(k_long=0.379, k_short=None,  custo=0.226),
-        "naked_45":     dict(k_long=0.067, k_short=None,  custo=0.389),
-        "spread_35_20": dict(k_long=0.218, k_short=0.773, custo=0.137),
-        "spread_45_25": dict(k_long=0.067, k_short=0.562, custo=0.208),
-        "spread_45_15": dict(k_long=0.067, k_short=1.035, custo=0.290),
+        "naked_30":     dict(k_long=0.379, k_short=None,  custo=0.202),
+        "naked_45":     dict(k_long=0.067, k_short=None,  custo=0.306),
+        "spread_35_20": dict(k_long=0.218, k_short=0.773, custo=0.139),
+        "spread_45_25": dict(k_long=0.067, k_short=0.562, custo=0.150),
+        "spread_45_15": dict(k_long=0.067, k_short=1.035, custo=0.225),
     },
 }
+
 # Compat: quem importa ESTRUTURAS_OPC sem lado recebe a tabela CALL. Só serve
 # para iterar nomes de estrutura — para cálculo de payoff use k_custo_lado().
 ESTRUTURAS_OPC = ESTRUTURAS_OPC_LADO[1]
