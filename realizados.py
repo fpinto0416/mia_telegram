@@ -150,6 +150,26 @@ def _imprimir_pisos(df: pd.DataFrame) -> None:
     Se um destes blocos voltar a mostrar empate, não há o que operar,
     independentemente de quão bons pareçam os números absolutos.
     """
+    # Dinheiro antes dos pisos: é a pergunta que o payoff em DP NÃO responde.
+    d = df.dropna(subset=["pnl_rs", "premio_rs"])
+    if len(d) >= 15:
+        inv, res = d["premio_rs"].sum(), d["pnl_rs"].sum()
+        moeda_rs = d["pnl_moeda_rs"].sum()
+        print("\n--- resultado em DINHEIRO (ponderado por capital) ---")
+        print(f"  investido (soma dos prêmios): R$ {inv:,.2f}  |  "
+              f"resultado: R$ {res:+,.2f} ({res / inv:+.1%})  (N={len(d)})")
+        print(f"  mesma carteira jogando moeda no lado: R$ {moeda_rs:+,.2f} ({moeda_rs / inv:+.1%})")
+        print(f"  sinais lucrativos: {int((d['pnl_rs'] > 0).sum())}/{len(d)} "
+              f"({(d['pnl_rs'] > 0).mean():.1%})")
+        pond = (d["payoff_naked_30"] * d["premio_rs"]).sum() / d["premio_rs"].sum()
+        simples = d["payoff_naked_30"].mean()
+        if simples * pond < 0:
+            print(f"  ATENÇÃO: payoff em dp com peso igual por sinal ({simples:+.4f}) e "
+                  f"ponderado por prêmio ({pond:+.4f}) têm SINAIS OPOSTOS.")
+            print(f"           dp normaliza por vol e preço do próprio ativo, então trata igual "
+                  f"um prêmio de R$ {d['premio_rs'].min():.2f} e um de R$ {d['premio_rs'].max():.2f}.")
+            print(f"           Em dinheiro manda o prêmio grande — leia a linha em R$, não a em dp.")
+
     print("\n--- pisos de comparação (piso batido = a diferença é o edge) ---")
 
     # Piso 1: moeda. Payoff de lado aleatório nos MESMOS ativos e MESMAS datas.
@@ -271,6 +291,16 @@ def _processar_sinal(row: pd.Series, data_sinal: date) -> dict | None:
         acerto_direcao = int(M_real > 0)
         M_mercado      = round(M_real * lado, 4)   # movimento do ativo, sem o lado do sinal
         payoff_moeda   = _payoff_moeda(M_mercado)
+        # Conversão para dinheiro. O payoff em DP é normalizado pela vol e pelo
+        # preço do PRÓPRIO ativo, então a média simples dele dá o mesmo peso a
+        # um prêmio de R$0,02 e a um de R$1,16 -- e as duas leituras podem ter
+        # sinais opostos (medido em 09/09: +0,0562 dp contra -36,2% em R$).
+        # `escala` é quanto vale 1 DP em reais por ação.
+        escala         = close_t * vol_t * SQRT_H
+        _, _, custo_lado = k_custo_lado("naked_30", lado)
+        premio_rs      = round(escala * custo_lado, 4)
+        pnl_rs         = round(payoffs["payoff_naked_30"] * escala, 4)
+        pnl_moeda_rs   = round(payoff_moeda * escala, 4) if np.isfinite(payoff_moeda) else np.nan
         # retorno da AÇÃO pura na direção do sinal (sem estrutura de opção
         # nenhuma por cima) -- só o carry/convexity do M_real são específicos
         # de opção; retorno_acao é literalmente lado * variação de preço.
@@ -283,6 +313,9 @@ def _processar_sinal(row: pd.Series, data_sinal: date) -> dict | None:
         M_real         = np.nan
         M_mercado      = np.nan
         payoff_moeda   = np.nan
+        premio_rs      = np.nan
+        pnl_rs         = np.nan
+        pnl_moeda_rs   = np.nan
         payoffs        = {f"payoff_{n}": np.nan for n in ESTRUTURAS_OPC}
         lucros         = {f"lucro_{n}": np.nan for n in ESTRUTURAS_OPC}
         acerto_direcao = np.nan
@@ -327,6 +360,9 @@ def _processar_sinal(row: pd.Series, data_sinal: date) -> dict | None:
         "M_real":                M_real,
         "M_mercado":             M_mercado,
         "payoff_moeda":          payoff_moeda,
+        "premio_rs":             premio_rs,
+        "pnl_rs":                pnl_rs,
+        "pnl_moeda_rs":          pnl_moeda_rs,
         "lado_trivial":          lado_trivial,
         "lado_modelo":           lado,
         "M_parcial":             M_parcial,

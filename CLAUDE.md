@@ -70,6 +70,23 @@ com base nele.
 aleatório nos mesmos ativos e datas, agora impresso pelo `realizados.py` — subiu
 junto, e a contribuição do sinal direcional segue em +0,0005 dp.
 
+### Resultado em DINHEIRO, não só em DP (09/09/2026)
+
+O `realizados.py` imprime agora, **antes dos pisos**, o resultado ponderado
+por capital — e grava as colunas `premio_rs`, `pnl_rs` e `pnl_moeda_rs`.
+
+Motivo: o payoff em DP é normalizado pela vol e pelo preço do próprio
+ativo, então a média simples dá o mesmo peso a um prêmio de R$ 0,02 e a um
+de R$ 1,16. As duas leituras chegaram a ter **sinais opostos**: em 09/09 o
+payoff médio em dp era **+0,0562** enquanto o mesmo conjunto em reais dava
+**−36,2%** (R$ −27,15 sobre R$ 75,07 investidos, 52 de 307 sinais
+lucrativos). A correlação entre tamanho do prêmio e payoff é **−0,243** —
+os ganhos se concentram nas opções baratas e as perdas nas caras.
+
+Quando os dois discordam de sinal, o script imprime um aviso explícito.
+**Ler a linha em R$**: um número em dp responde "o movimento passou do
+breakeven", um número em reais responde "sobrou dinheiro".
+
 ### Pisos de comparação no `realizados.py`
 
 Toda rodada agora imprime dois pisos antes de qualquer número absoluto, e grava
