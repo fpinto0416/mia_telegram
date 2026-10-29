@@ -26,12 +26,10 @@ ESPERANCA_FORTE  = 0.20   # quartil superior na escala de payoff líquido
 RV_RANK_BARATO   = 0.30
 RV_RANK_MODERADO = 0.60
 
-#importar Selic
-from bcb import sgs
+# Selic meta (SGS 432), com nova tentativa e valor reserva -- ver selic.py
+from selic import selic_anual
 
-# O código 432 é a Selic meta/diária
-df = sgs.get({'selic': 432}, start='2026-01-01')
-selic=df['selic'].iloc[-1] / 100.0
+selic = selic_anual()
 selic_diaria = (1 + selic) ** (1/252) - 1
 CARRY_20 = (1 + selic_diaria) ** 20 - 1  # carry livre de risco em 20 pregões
 

@@ -96,13 +96,9 @@ try:
 except ImportError:
     _ADVISOR_OK = False
 
-try:
-    from bcb import sgs as _sgs
-    _df_selic = _sgs.get({'selic': 432}, start='2025-01-01')
-    SELIC_DIARIA = float(_df_selic['selic'].iloc[-1]) / 100.0
-    SELIC_DIARIA = (1 + SELIC_DIARIA) ** (1/252) - 1
-except Exception:
-    SELIC_DIARIA = 0.000397  # fallback ~10.5% a.a.
+# Selic meta (SGS 432), com nova tentativa, cache e valor reserva -- ver selic.py
+from selic import selic_diaria as _selic_diaria
+SELIC_DIARIA = _selic_diaria()
 CARRY_20 = (1 + SELIC_DIARIA) ** 20 - 1  # retorno livre de risco em 20 pregões
 
 
