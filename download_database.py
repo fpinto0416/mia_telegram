@@ -36,6 +36,32 @@ tv = TvDatafeed(username, password)
 ######################################
 ####importar dados do tradingview#####
 ######################################
+# RAIZ4 negocia como RAIZ55 desde 03/11/2026, cotada por LOTE DE 100 acoes (nao
+# e grupamento). O nome interno continua RAIZ4 porque os modelos sao salvos pelo
+# nome do ativo e foram treinados em preco por acao: baixa de RAIZ55 e divide
+# por 100 o que vem depois da mudanca. A guarda de 20x evita aplicar duas vezes
+# caso o Yahoo passe a ajustar a serie.
+FONTE_COTACAO = {"RAIZ4": "RAIZ55"}
+FATOR_COTACAO = {"RAIZ4": ("2026-11-03", 100)}
+
+
+def por_acao(df, ticker):
+    if ticker not in FATOR_COTACAO:
+        return df
+    inicio, fator = FATOR_COTACAO[ticker]
+    depois = pd.to_datetime(pd.Index(df.index)) >= pd.Timestamp(inicio)
+    if not depois.any() or depois.all():
+        return df
+    close = df["Close"].to_numpy(dtype=float)
+    if close[depois][0] / close[~depois][-1] < 20:
+        return df
+    df = df.copy()
+    colunas = ["Open", "High", "Low", "Close"]
+    df[colunas] = df[colunas].astype(float)
+    df.loc[depois, colunas] = df.loc[depois, colunas] / fator
+    return df
+
+
 def importar_tradingview(ticker, hoje = pd.to_datetime("today").date()):
     tentativa = 0
     while tentativa < 5:  # Tenta duas vezes antes de desistir
@@ -208,19 +234,21 @@ for ticker in tickers:
             if ticker in ['ARKK', 'SPY', 'TFLO','GLD','IAU']:
                 df = yf.download(ticker, start='2000-01-01', end=hoje, progress=False)
             else:
-                df = yf.download(ticker+'.SA', start='2000-01-01', end=hoje, progress=False)
+                fonte = FONTE_COTACAO.get(ticker, ticker)
+                df = yf.download(fonte+'.SA', start='2000-01-01', end=hoje, progress=False)
             if isinstance(df.columns, pd.MultiIndex):
                 df.columns = df.columns.get_level_values(0)
             df.index = df.index.date
             df = df[df['Volume'] != 0]
 
-            df_tradingview = importar_tradingview(ticker, hoje)
+            df_tradingview = importar_tradingview(FONTE_COTACAO.get(ticker, ticker), hoje)
             df_tradingview = df_tradingview.loc[df_tradingview.index > df.index[-1]]
             # Garante que as colunas fiquem na mesma ordem antes de concatenar
             df_tradingview = df_tradingview[df.columns]
 
             # Agora a concatenação será perfeita
             df = pd.concat([df, df_tradingview])
+            df = por_acao(df, ticker)
         nome_saida = os.path.join(caminho, f"{ticker}.xlsx")
         print(f"Salvando {ticker}")
         df.to_excel(nome_saida)

@@ -229,3 +229,11 @@ por si só a causa raiz (suspeita de RAM da VPS) mas reduz a chance de
 ## Estrutura
 
 Ver `README.md`, seção "Arquivos", pra lista completa.
+
+## RAIZ4 virou RAIZ55 (03/11/2026)
+
+Lote de 100 ações, não grupamento. O `download_database.py` baixa `RAIZ55` e
+grava em `database/RAIZ4.xlsx`, dividindo por 100 o que vem depois de 03/11: o
+nome interno e a escala por ação seguem iguais porque os modelos são salvos
+pelo nome do ativo. Na mensagem o papel aparece como RAIZ4, com preço por ação;
+para operar, o código é RAIZ55 e a cotação é por lote de 100.
